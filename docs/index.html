@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>油管访谈精读 · youtube-interview-digest</title>
+<style>
+:root{--bg:#11121f;--card:#1b1d33;--accent:#f87171;--indigo:#818cf8;--text:#e2e8f0;--muted:#94a3b8}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#211e54,#0d0e1c);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Segoe UI,sans-serif;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:48px 20px 64px}
+header{text-align:center;padding:24px 0 8px}
+.kicker{color:var(--muted);letter-spacing:.18em;font-size:13px;text-transform:uppercase}
+h1{font-size:46px;margin:8px 0 4px}
+.sub{color:var(--indigo);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px}
+.tag{font-size:18px;color:var(--text);max-width:720px;margin:18px auto 0}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:28px 0}
+.btn{padding:11px 20px;border-radius:24px;text-decoration:none;font-weight:600;font-size:15px;border:2px solid transparent}
+.btn.primary{background:var(--accent);color:#1a0d0d}
+.btn.ghost{border-color:rgba(129,140,248,.4);color:var(--text)}
+.chips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0 4px}
+.chip{border:1px solid rgba(248,113,113,.4);border-radius:18px;padding:6px 14px;font-size:14px;color:var(--text)}
+.section{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:22px 24px;margin:28px 0}
+.section h2{margin-top:0;font-size:22px}
+pre{background:#0d0e1c;border-radius:10px;padding:14px 16px;overflow:auto;font-size:13px;color:#cbd5e1}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+iframe{width:100%;height:820px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:#0d0e1c}
+.note{color:var(--muted);font-size:13px}
+footer{text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Agent Skill · YouTube 访谈精读</div>
+    <h1>油管访谈精读</h1>
+    <div class="sub">youtube-interview-digest</div>
+    <p class="tag">长访谈高效导读：框架与主线先行，借评论区发现价值点与亮点，再拓展读透全篇。</p>
+    <div class="chips">
+      <span class="chip">1 小时访谈 → 10 分钟读完</span>
+      <span class="chip">时间戳一键跳回原视频</span>
+      <span class="chip">金句逐字原文校验</span>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="example-report.html" target="_blank">▶ 看真实成品报告</a>
+      <a class="btn ghost" href="https://github.com/chanyanming-a11y/youtube-interview-digest" target="_blank">GitHub 仓库</a>
+    </div>
+  </header>
+
+  <div class="section">
+    <h2>现场成品（Lenny's Podcast × Elizabeth Stone 示例）</h2>
+    <p class="note">下方为完整报告内嵌预览，点击任意时间码即可跳回原视频；也可 <a href="example-report.html" target="_blank">新标签页打开</a>。</p>
+    <iframe src="example-report.html" title="示例精读报告" loading="lazy"></iframe>
+  </div>
+
+  <div class="section">
+    <h2>安装</h2>
+    <pre><code>git clone https://github.com/chanyanming-a11y/youtube-interview-digest.git
+cd youtube-interview-digest
+./install.sh                     # 默认装到 ~/.workbuddy/skills/
+./install.sh ~/.my-agent/skills  # 或指定其他支持 SKILL.md 的 agent</code></pre>
+    <p class="note">依赖：Python ≥ 3.10，以及 <code>pip install -r skills/youtube-interview-digest/requirements.txt</code>（yt-dlp, youtube-transcript-api）。</p>
+  </div>
+
+  <div class="section">
+    <h2>怎么用</h2>
+    <pre><code>「帮我总结这个油管视频 https://www.youtube.com/watch?v=… 」
+「精读 / 拆解这期播客，要带时间戳」
+「这是某期访谈的字幕文件（.srt / .vtt / 带时间戳的 txt），帮我做精读」</code></pre>
+  </div>
+
+  <footer>MIT License · 用于个人学习与研究的油管访谈精读 skill</footer>
+</div>
+</body>
+</html>

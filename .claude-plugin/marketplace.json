@@ -1,0 +1,22 @@
+{
+  "name": "youtube-interview-digest",
+  "owner": {
+    "name": "chanyanming-a11y",
+    "email": "chanyanming-a11y@users.noreply.github.com"
+  },
+  "metadata": {
+    "description": "长访谈高效导读：把 YouTube 访谈/播客变成带时间戳、可点击跳转的中文精读报告",
+    "version": "1.1.0"
+  },
+  "plugins": [
+    {
+      "name": "youtube-interview-digest",
+      "description": "把一期 1 小时 YouTube 访谈或播客，变成 10 分钟读完、每句结论都能一键跳回原视频的中文精读报告。",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/youtube-interview-digest"
+      ]
+    }
+  ]
+}

@@ -31,7 +31,7 @@
 | 218 条评论线程、47 条回复 | 7 个评论主题 · 6 组观点冲突 · 2 处事实纠错 |
 | — | **113 个可点击时间点**，10 条中英对照金句，全部通过原文校验 |
 
-👉 看完整报告：[`examples/netflix-elizabeth-stone/`](examples/netflix-elizabeth-stone/)　👉 看价值拆解：[`docs/case-study.md`](docs/case-study.md)
+👉 看完整报告：[`examples/netflix-elizabeth-stone/`](examples/netflix-elizabeth-stone/)（或 [🌐 在线交互版](https://chanyanming-a11y.github.io/youtube-interview-digest/example-report.html)）　👉 看价值拆解：[`docs/case-study.md`](docs/case-study.md)
 
 <table>
 <tr>
