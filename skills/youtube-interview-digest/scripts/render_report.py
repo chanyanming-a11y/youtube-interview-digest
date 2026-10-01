@@ -17,6 +17,7 @@ Usage:
 import argparse
 import datetime
 import difflib
+import html
 import json
 import os
 import re
@@ -339,7 +340,7 @@ def main():
     with open(TEMPLATE, encoding="utf-8") as f:
         tpl = f.read()
     title = (digest.get("title_zh") or meta.get("title") or "YouTube 访谈精读")
-    html = tpl.replace("__TITLE__", title.replace("<", "&lt;")).replace("__DATA_JSON__", data)
+    html = tpl.replace("__TITLE__", html.escape(title, quote=False)).replace("__DATA_JSON__", data)
     html_path = os.path.join(out, f"{args.name}.html")
     md_path = os.path.join(out, f"{args.name}.md")
     with open(html_path, "w", encoding="utf-8") as f:

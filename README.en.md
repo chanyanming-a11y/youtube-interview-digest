@@ -52,6 +52,7 @@ Then ask the agent something like "summarize this YouTube interview with timesta
 
 ## Notes
 
-- For personal study and research. Respect YouTube's Terms of Service and content copyright. When sharing reports publicly, render with `--no-transcript`. The example in this repo does.
+- For personal study and research. Respect YouTube's Terms of Service and content copyright. When sharing reports publicly, render with `--no-transcript` (YouTube captions are platform content; redistributing large chunks may breach ToS). This repo's `examples/` and the GitHub Pages demo keep the full transcript **for demonstrating the output format only** — not an endorsement to redistribute the video's captions.
 - Never commit cookie files. They are excluded by `.gitignore`.
+- Security (vulnerability reporting, SSRF / cookie notes): see [SECURITY.md](SECURITY.md).
 - MIT licensed.

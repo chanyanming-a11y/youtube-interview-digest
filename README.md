@@ -182,8 +182,10 @@ youtube-interview-digest/
 ## 合规说明
 
 - 本工具用于个人学习和研究。请遵守 YouTube 服务条款，尊重视频和转写的版权。
-- **公开分享报告时**，建议使用 `render_report.py --no-transcript` 去掉全文译稿，只保留摘要、短引用和时间戳（本仓库的示例就是这样处理的）。
+- **公开分享报告时**，建议用 `render_report.py --no-transcript` 去掉全文译稿，只保留摘要、短引用和时间戳。注意：YouTube 字幕属平台内容，大段再分发可能有 ToS / 版权风险，请自行评估。
+- 本仓库 `examples/` 与 GitHub Pages 上的示例报告**保留完整字幕译稿**，仅用于展示成品格式，不代表默认允许对外再分发该视频字幕。
 - 使用浏览器登录信息属于敏感操作，skill 要求 agent 先征得用户同意。**不要把 cookies 文件提交到仓库**，`.gitignore` 已默认排除。
+- 安全相关（漏洞反馈、SSRF / 密钥注意事项）：见 [SECURITY.md](SECURITY.md)。
 
 ## 更新记录
 

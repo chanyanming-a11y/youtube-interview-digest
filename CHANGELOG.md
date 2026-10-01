@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.1 — 2026-10-01
+
+隐私、安全与发布完善（无功能 / 数据变动）。
+
+- 隐私：全部提交作者署名改为 `chanyanming-a11y`（去除真实姓名）；`marketplace.json` owner 元数据同步
+- 发布：新增 GitHub Pages 在线示例（`docs/index.html` + `docs/example-report.html`）、Claude Code 插件市场清单（`.claude-plugin/marketplace.json`）、SKILL.md description 补充 negative triggers
+- 安全：限制 Substack 外部转写抓取仅允许公网域名（阻断内网 / 元数据 SSRF）；报告 HTML 标题改用 `html.escape` 转义
+- 依赖与文档：锁定核心依赖版本、新增 `SECURITY.md`、README 补充版权与公开分享提示
+
 ## v1.0.0 — 2026-09-30
 
 首个公开版本。

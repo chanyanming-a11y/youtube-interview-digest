@@ -24,11 +24,35 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+import ipaddress
 from datetime import datetime
 
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 _DEC = json.JSONDecoder()
+
+
+# --- SSRF guard: only fetch public hostnames, never IP literals / loopback / cloud metadata
+def _host_safe(host):
+    h = (host or "").split(":")[0].lower().strip("[]")
+    if not h or h == "localhost" or h.endswith(".local") or h.endswith(".internal") \
+       or h in ("metadata", "metadata.google.internal"):
+        return False
+    try:
+        ipaddress.ip_address(h)          # IP literal -> reject (blocks 127.0.0.1, 169.254.169.254, ::1)
+        return False
+    except ValueError:
+        return True
+
+
+def _url_safe(url):
+    try:
+        p = urllib.parse.urlparse(url)
+    except Exception:
+        return False
+    if p.scheme not in ("http", "https"):
+        return False
+    return _host_safe(p.hostname or "")
 
 
 def _http(url, data=None, headers=None, timeout=40, proxy=None):
@@ -339,6 +363,8 @@ def transcript_from_substack(urls, proxy=None, log=None):
             continue
         tried.add(m.group(0))
         host, slug = m.groups()
+        if not _host_safe(host):
+            continue
         try:
             post = json.loads(_http(f"https://{host}/api/v1/posts/{slug}", proxy=proxy))
         except Exception as e:  # noqa: BLE001
@@ -349,7 +375,7 @@ def transcript_from_substack(urls, proxy=None, log=None):
             up = post.get(key) or {}
             tr = up.get("transcription") or {}
             cdn = tr.get("cdn_url")
-            if not cdn:
+            if not cdn or not _url_safe(cdn):
                 continue
             try:
                 raw = json.loads(_http(cdn, proxy=proxy, timeout=90))
