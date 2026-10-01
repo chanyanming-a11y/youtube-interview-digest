@@ -296,6 +296,14 @@ def to_markdown(meta, g, transcript, vid, extra=None):
 
 # ---------------------------------------------------------------- main
 
+def _escape_title(title):
+    """Escape a video title for safe embedding inside the report <title> element.
+
+    Uses html.escape(quote=False) so '<', '>' and '&' cannot break out of the tag.
+    """
+    return html.escape(title or "", quote=False)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--work", required=True)
@@ -340,7 +348,7 @@ def main():
     with open(TEMPLATE, encoding="utf-8") as f:
         tpl = f.read()
     title = (digest.get("title_zh") or meta.get("title") or "YouTube 访谈精读")
-    html = tpl.replace("__TITLE__", html.escape(title, quote=False)).replace("__DATA_JSON__", data)
+    html = tpl.replace("__TITLE__", _escape_title(title)).replace("__DATA_JSON__", data)
     html_path = os.path.join(out, f"{args.name}.html")
     md_path = os.path.join(out, f"{args.name}.md")
     with open(html_path, "w", encoding="utf-8") as f:

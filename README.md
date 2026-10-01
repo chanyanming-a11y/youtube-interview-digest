@@ -4,7 +4,7 @@
 
 [English](README.en.md) · [示例报告](examples/netflix-elizabeth-stone/) · [案例解读：这份报告的价值在哪](docs/case-study.md)
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-%E2%89%A53.10-3776AB) ![Format](https://img.shields.io/badge/skill-SKILL.md-orange)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-%E2%89%A53.10-3776AB) ![Format](https://img.shields.io/badge/skill-SKILL.md-orange) ![CI](https://github.com/chanyanming-a11y/youtube-interview-digest/actions/workflows/ci.yml/badge.svg)
 
 ![报告总览](docs/images/01-overview.jpg)
 

@@ -34,15 +34,35 @@ _DEC = json.JSONDecoder()
 
 # --- SSRF guard: only fetch public hostnames, never IP literals / loopback / cloud metadata
 def _host_safe(host):
-    h = (host or "").split(":")[0].lower().strip("[]")
-    if not h or h == "localhost" or h.endswith(".local") or h.endswith(".internal") \
-       or h in ("metadata", "metadata.google.internal"):
+    h = (host or "").lower().strip()
+    if not h:
         return False
+    # IPv6 literal in brackets: [::1] or [::1]:8080
+    if h.startswith("["):
+        rb = h.find("]")
+        if rb == -1:
+            return False
+        h = h[1:rb]
+    # Bare IP (v4 or v6) -> reject (blocks 127.0.0.1, 169.254.169.254, ::1, fe80::1, ...)
     try:
-        ipaddress.ip_address(h)          # IP literal -> reject (blocks 127.0.0.1, 169.254.169.254, ::1)
+        ipaddress.ip_address(h)
         return False
     except ValueError:
-        return True
+        pass
+    # Not a bare IP: it may carry a trailing :port (IPv4 / hostname). Strip and re-check.
+    if ":" in h:
+        h = h.rsplit(":", 1)[0]
+        if not h:
+            return False
+        try:
+            ipaddress.ip_address(h)       # e.g. 127.0.0.1 from 127.0.0.1:8080
+            return False
+        except ValueError:
+            pass
+    if h == "localhost" or h.endswith(".local") or h.endswith(".internal") \
+       or h in ("metadata", "metadata.google.internal"):
+        return False
+    return True
 
 
 def _url_safe(url):

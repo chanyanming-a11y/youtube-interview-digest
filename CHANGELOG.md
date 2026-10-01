@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.1.2 — 2026-10-01
+
+成熟度与测试（无功能 / 数据变动）。
+
+- 测试：新增 `tests/test_security.py`（标准库，无需联网），覆盖 Substack 抓取的 SSRF 防护与报告标题转义
+- CI：新增 `.github/workflows/ci.yml`，push/PR 到 main 时用 Python 3.10–3.12 跑 `py_compile` + 测试
+- 安全修复：SSRF 防护 `_host_safe` 修正对 IPv6 字面量（`::1` / `fe80::1`）和 `host:port` 形式的误放行
+- 贡献：`CONTRIBUTING.md`；README 增加 CI 状态徽章；报告标题转义抽出 `_escape_title` 便于测试
+- 文档：README 现有 7 张截图（`docs/images/*.jpg`）已覆盖效果预览
+
 ## v1.1.1 — 2026-10-01
 
 隐私、安全与发布完善（无功能 / 数据变动）。
