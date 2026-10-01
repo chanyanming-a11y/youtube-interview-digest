@@ -100,7 +100,7 @@ $PY $S/render_report.py --work $W --strict
 | `scripts/analyze_signals.py` | 检测回看高峰、聚类评论时间戳、提取高赞线程和关键词，生成 signals.md |
 | `scripts/render_report.py` | 校验 digest 并渲染 HTML 和 Markdown；`--no-transcript` 可去掉全文译稿（公开分享时用） |
 | `requirements.txt` | Python 依赖（yt-dlp、youtube-transcript-api） |
-| `assets/report_template.html` | 报告模板：左侧吸顶播放器、热度曲线和目录，右侧十个部分 |
+| `assets/report_template.html` | 报告模板：左侧吸顶播放器、热度曲线和目录，右侧十个部分；支持浏览器原生语音朗读（朗读 / 停止 / 中英双语 / 语速调节，逐段高亮并自动滚动） |
 | `references/translation-guide.md` | 译稿格式、说话人识别、术语、长视频策略 |
 | `references/analysis-framework.md` | 解构、热度补充、压缩的方法论和自检清单 |
 | `references/digest-schema.md` | digest.json 字段说明和示例 |

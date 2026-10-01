@@ -165,6 +165,9 @@ blockquote footer{display:flex;gap:10px;align-items:baseline;margin-top:6px;font
 .tr .spk{font-size:12px;color:var(--mute);font-weight:600;margin-right:6px}
 .tr .en{display:none;color:var(--mute);font-size:13px;margin-top:2px}
 .tr.bi .en{display:block}
+.tr .row.speaking{background:var(--accent-bg);box-shadow:inset 3px 0 0 var(--accent)}
+.tr-tools select{border:1px solid var(--line);background:var(--paper);border-radius:4px;padding:6px 8px;font-size:13px;color:var(--sub);cursor:pointer}
+.tr-tools .sep{width:1px;align-self:stretch;background:var(--line);margin:0 2px}
 mark{background:#f6e3a1;padding:0 1px}
 .foot{color:var(--mute);font-size:12px;padding:24px 0 48px;border-top:1px solid var(--ink);margin-top:8px}
 .foot a{text-underline-offset:3px}
@@ -346,7 +349,7 @@ if ((G.glossary||[]).length){
 const TR = D.transcript || [];
 if (TR.length){
   const hasEn = TR.some(r=>r.en);
-  const b = `<div class="tr-tools"><input id="q" placeholder="搜索译稿或英文原文">${hasEn? '<button id="bi">显示英文</button>':''}<button id="follow" class="on">跟随播放</button></div>
+  const b = `<div class="tr-tools"><input id="q" placeholder="搜索译稿或英文原文">${hasEn? '<button id="bi">显示英文</button>':''}<button id="follow" class="on">跟随播放</button><span class="sep"></span><button id="tts">朗读</button><button id="ttsStop">停止</button><select id="ttsLang">${hasEn?'<option value="bi">中英双语</option>':''}<option value="zh" selected>中文</option>${hasEn?'<option value="en">English</option>':''}</select><select id="ttsRate"><option value="0.85">0.85×</option><option value="1" selected>1×</option><option value="1.2">1.2×</option><option value="1.5">1.5×</option></select></div>
     <div class="tr" id="tr">${TR.map((r,i)=>`<div class="row" data-i="${i}" data-t="${sec(r.t)}">${cell(r.t)}<div>${r.speaker? `<span class="spk">${esc(r.speaker)}</span>`:''}<span class="zh">${esc(r.zh||r.en||'')}</span>${r.en&&r.zh? `<div class="en">${esc(r.en)}</div>`:''}</div></div>`).join('')}</div>`;
   section('transcript','全文译稿', `${TR.length} 段，播放时会自动滚到当前位置。`, b);
 }
@@ -445,6 +448,67 @@ const q = $('#q'); if (q) q.addEventListener('input', ()=>{
 });
 const bi = $('#bi'); if (bi) bi.addEventListener('click', ()=>{ const on = $('#tr').classList.toggle('bi'); bi.classList.toggle('on', on); bi.textContent = on? '隐藏英文':'显示英文'; });
 const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !follow; fo.classList.toggle('on', follow); });
+
+/* ---------- text-to-speech (voice reading) */
+(function(){
+  const ttsBtn = $('#tts'), stopBtn = $('#ttsStop'), langSel = $('#ttsLang'), rateSel = $('#ttsRate');
+  if (!ttsBtn) return;                                   // page has no transcript / controls
+  const synth = window.speechSynthesis;
+  if (!synth){                                           // browser without Web Speech API
+    const t = ttsBtn.closest('.tr-tools');
+    if (t) t.insertAdjacentHTML('beforeend', '<span class="tip" style="align-self:center">当前浏览器不支持语音朗读</span>');
+    [ttsBtn, stopBtn, langSel, rateSel].forEach(el => el && el.remove());
+    return;
+  }
+  let idx = -1, paused = false, speaking = false, epoch = 0;
+  function segsFor(r){
+    const zh = r.querySelector('.zh'), en = r.querySelector('.en');
+    const z = zh ? zh.textContent.trim() : '', e = en ? en.textContent.trim() : '';
+    const w = langSel.value;
+    if (w === 'en') return e ? [{t:e, lang:'en-US'}] : [];
+    if (w === 'bi'){ const a = []; if (z) a.push({t:z, lang:'zh-CN'}); if (e) a.push({t:e, lang:'en-US'}); return a; }
+    return z ? [{t:z, lang:'zh-CN'}] : [];
+  }
+  function pickVoice(lang){
+    const vs = synth.getVoices(); if (!vs.length) return null;
+    const pre = lang.split('-')[0];
+    return vs.find(v => (v.lang||'').toLowerCase().startsWith(pre)) || null;
+  }
+  function scrollToRow(r){ const box = $('#tr'); if (box) box.scrollTo({ top: r.offsetTop - box.offsetTop - 120, behavior:'smooth' }); }
+  function clearHi(){ trRows.forEach(r => r.classList.remove('speaking')); }
+  function speakRow(ep){
+    if (ep !== epoch) return;
+    idx++;
+    if (idx >= trRows.length){ finish(); return; }
+    const r = trRows[idx]; r.classList.add('speaking'); if (follow) scrollToRow(r);
+    const segs = segsFor(r);
+    if (!segs.length){ speakRow(ep); return; }
+    let i = 0;
+    const playNext = () => {
+      if (ep !== epoch || paused) return;
+      if (i >= segs.length){ speakRow(ep); return; }
+      const s = segs[i++];
+      const u = new SpeechSynthesisUtterance(s.t); u.lang = s.lang;
+      const v = pickVoice(s.lang); if (v) u.voice = v;
+      u.rate = parseFloat(rateSel.value) || 1;
+      u.onend = playNext; u.onerror = playNext;
+      synth.speak(u);
+    };
+    playNext();
+  }
+  function start(){
+    if (speaking && paused){ synth.resume(); paused = false; ttsBtn.textContent = '暂停'; return; }
+    epoch++; speaking = true; paused = false; ttsBtn.textContent = '暂停';
+    synth.cancel(); clearHi(); idx = -1; speakRow(epoch);
+  }
+  function pause(){ if (!speaking) return; paused = true; synth.pause(); ttsBtn.textContent = '继续'; }
+  function finish(){ epoch++; speaking = false; paused = false; idx = -1; synth.cancel(); ttsBtn.textContent = '朗读'; clearHi(); }
+  ttsBtn.addEventListener('click', () => { if (speaking && !paused) pause(); else start(); });
+  if (stopBtn) stopBtn.addEventListener('click', finish);
+  if (langSel) langSel.addEventListener('change', () => { if (speaking){ const wasPaused = paused; finish(); if (!wasPaused) start(); } });
+  /* Chrome truncates long single utterances; a light heartbeat keeps the queue alive */
+  setInterval(() => { if (speaking && !paused && synth.speaking && !synth.paused) { try { synth.resume(); } catch(e){} } }, 5000);
+})();
 })();
 </script>
 </body>
