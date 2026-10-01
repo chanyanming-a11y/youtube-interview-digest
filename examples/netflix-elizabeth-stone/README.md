@@ -20,6 +20,6 @@
 GitHub 不会直接渲染 HTML 文件。可以任选一种方式：
 
 1. **GitHub Pages**（推荐）：仓库 Settings → Pages → Source 选 `main` 分支的 `/ (root)`，之后访问
-   `https://<your-name>.github.io/youtube-interview-digest/examples/netflix-elizabeth-stone/report.html`。
+   `https://chanyanming-a11y.github.io/youtube-interview-digest/examples/netflix-elizabeth-stone/report.html`。
    通过 https 访问时，内嵌播放器通常可以正常播放和跳转。
 2. 下载 `report.html`，在本地浏览器打开。如果播放器报错 153，改用 `python3 -m http.server` 本地起服务预览。

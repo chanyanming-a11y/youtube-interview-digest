@@ -83,7 +83,7 @@ flowchart LR
 **方式一：安装脚本**
 
 ```bash
-git clone https://github.com/<your-name>/youtube-interview-digest.git
+git clone https://github.com/chanyanming-a11y/youtube-interview-digest.git
 cd youtube-interview-digest
 ./install.sh                     # 默认装到 ~/.workbuddy/skills/
 ./install.sh ~/.my-agent/skills  # 或指定其他支持 SKILL.md 的 agent 的 skills 目录

@@ -31,7 +31,7 @@ An agent skill in the `SKILL.md` format. Given a YouTube link (or a transcript f
 ## Install
 
 ```bash
-git clone https://github.com/<your-name>/youtube-interview-digest.git
+git clone https://github.com/chanyanming-a11y/youtube-interview-digest.git
 cd youtube-interview-digest
 ./install.sh                         # → ~/.workbuddy/skills/
 ./install.sh ~/.your-agent/skills    # any agent that loads SKILL.md skills
