@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.3 — 2026-10-01
+
+进阶成熟度（无功能 / 数据变动）。
+
+- Release 自动化：新增 `.github/workflows/release.yml`，推送 `v*` 标签即由 CI 从 CHANGELOG.md 抽取对应段落自动发 GitHub Release 并标记为 Latest（不再需要手动 UI；git push 无法建 Release 的痛点已解决）
+- 测试：新增 `tests/test_example_report.py`，冒烟校验 `docs/example-report.html` 与 `examples/netflix-elizabeth-stone/` 的 report.html/report.md/digest.json 为有效渲染产物
+- 依赖与安全：新增 `.github/dependabot.yml`（pip + github-actions 月度更新，保持 yt-dlp / youtube-transcript-api 与 Action 不过期）
+- 协作模板：新增 PR 模板与 Issue 模板（bug / feature YAML 表单）
+
 ## v1.1.2 — 2026-10-01
 
 成熟度与测试（无功能 / 数据变动）。

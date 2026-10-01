@@ -1,0 +1,30 @@
+name: Bug 报告
+description: 报告一个功能、渲染或抓取问题
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 现象
+      description: 期望是什么，实际发生了什么？
+    validations:
+      required: true
+  - type: input
+    id: video
+    attributes:
+      label: 相关视频链接（可选）
+      description: 便于复现的 YouTube 链接
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      description: 一步步怎么做能稳定触发？
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: 环境
+      description: Python 版本、所用 agent、操作系统
+    validations:
+      required: false
