@@ -30,6 +30,10 @@ An agent skill in the `SKILL.md` format. Given a YouTube link (or a transcript f
 
 [Netflix CPTO Elizabeth Stone on Lenny's Podcast](https://www.youtube.com/watch?v=t0GiTyz4syY). The episode is 72 minutes long, with about 13k words and 218 comment threads. The resulting report has 113 clickable timestamps, 6 TL;DR items, 8 framework nodes, 10 verified quotes, 6 viewpoint conflicts, 6 hotspots, and 2 fact-checks. See [`examples/`](examples/netflix-elizabeth-stone/).
 
+> 🎬 **Demo**: the live interactive version (https://chanyanming-a11y.github.io/youtube-interview-digest/example-report.html) lets you click any timestamp to seek — the best way to see it work.
+> <!-- Placeholder: record a 10–20s screen capture as docs/images/demo.gif, then uncomment the next line to show it here -->
+> <!-- ![Demo](docs/images/demo.gif) -->
+
 ## Install
 
 ```bash
@@ -41,6 +45,10 @@ python3 -m pip install -r skills/youtube-interview-digest/requirements.txt   # P
 ```
 
 Then ask the agent something like "summarize this YouTube interview with timestamps: <url>".
+
+**Install via your coding agent (no command line needed)**: paste the following to your agent and it will clone and place the skill in the right skills directory:
+
+> Please clone this skill repo (https://github.com/chanyanming-a11y/youtube-interview-digest) locally and copy its `skills/youtube-interview-digest/` directory into your agent's skills directory (e.g. `~/.workbuddy/skills/` or Claude Code's skills dir). If unsure of the path, ask me which agent and skills dir I use. When done, briefly explain how to trigger it in chat, e.g. "summarize this YouTube interview with timestamps: <url>".
 
 ## Bot-check fallback chain
 
@@ -57,4 +65,5 @@ Then ask the agent something like "summarize this YouTube interview with timesta
 - For personal study and research. Respect YouTube's Terms of Service and content copyright. When sharing reports publicly, render with `--no-transcript` (YouTube captions are platform content; redistributing large chunks may breach ToS). This repo's `examples/` and the GitHub Pages demo keep the full transcript **for demonstrating the output format only** — not an endorsement to redistribute the video's captions.
 - Never commit cookie files. They are excluded by `.gitignore`.
 - Security (vulnerability reporting, SSRF / cookie notes): see [SECURITY.md](SECURITY.md).
+- Privacy & data flow (what leaves your machine, what stays local, cookie handling): see [PRIVACY.md](PRIVACY.md).
 - MIT licensed.

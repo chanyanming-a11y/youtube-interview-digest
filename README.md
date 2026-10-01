@@ -33,6 +33,10 @@
 
 👉 看完整报告：[`examples/netflix-elizabeth-stone/`](examples/netflix-elizabeth-stone/)（或 [🌐 在线交互版](https://chanyanming-a11y.github.io/youtube-interview-digest/example-report.html)）　👉 看价值拆解：[`docs/case-study.md`](docs/case-study.md)
 
+> 🎬 **演示**：在线交互版（链接同上）可直接点击时间点跳转，最能说明效果。
+> <!-- 占位：录制一段 10–20 秒的屏录保存为 docs/images/demo.gif 后，取消下一行注释即可在此显示演示动画 -->
+> <!-- ![演示](docs/images/demo.gif) -->
+
 <table>
 <tr>
 <td><img src="docs/images/02-framework.jpg" alt="内容结构"><br><sub>内容结构：按视频顺序分段，每个要点都能点回原视频</sub></td>
@@ -90,6 +94,10 @@ cd youtube-interview-digest
 ```
 
 **方式二：手动**：把 `skills/youtube-interview-digest/` 整个目录复制到你的 agent 的 skills 目录下。
+
+**方式三：让 agent 帮你装（无需懂命令行）**：把下面这段话直接发给你的编程 Agent，它会帮你克隆并放到正确的 skills 目录：
+
+> 请帮我把这个 skill 仓库（https://github.com/chanyanming-a11y/youtube-interview-digest）克隆到本地，并把里面的 `skills/youtube-interview-digest/` 目录复制到你的 agent 的 skills 目录下（如 `~/.workbuddy/skills/` 或 Claude Code 的 skills 目录）。若不确定路径，先告诉我你用的 agent 与 skills 目录位置。完成后简要说明怎么在对话里触发它，例如「帮我总结这个油管视频 <链接>」。
 
 **依赖**：Python ≥ 3.10，以及
 
@@ -186,6 +194,7 @@ youtube-interview-digest/
 - 本仓库 `examples/` 与 GitHub Pages 上的示例报告**保留完整字幕译稿**，仅用于展示成品格式，不代表默认允许对外再分发该视频字幕。
 - 使用浏览器登录信息属于敏感操作，skill 要求 agent 先征得用户同意。**不要把 cookies 文件提交到仓库**，`.gitignore` 已默认排除。
 - 安全相关（漏洞反馈、SSRF / 密钥注意事项）：见 [SECURITY.md](SECURITY.md)。
+- 隐私与数据流向（对外发送什么、什么留本地、cookies 处理）：见 [PRIVACY.md](PRIVACY.md)。
 
 ## 更新记录
 

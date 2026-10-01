@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.1.4 — 2026-10-01
+
+隐私透明化与上手优化（无功能 / 数据变动）。
+
+- 隐私：新增 `PRIVACY.md`，明确数据流向（视频 URL 发往 YouTube/InnerTube、描述里的 Substack 链接经 SSRF 校验、翻译走 agent 自身模型、cookies 仅本地读取、无服务器 / 遥测）
+- 上手：README 增加「让 agent 帮你装」复制即用提示（无需命令行），中英文同步
+- 演示：README 效果区增加在线交互版说明，并预留演示 GIF 占位（`docs/images/demo.gif` 录制后取消注释即生效）
+
 ## v1.1.3 — 2026-10-01
 
 进阶成熟度（无功能 / 数据变动）。
