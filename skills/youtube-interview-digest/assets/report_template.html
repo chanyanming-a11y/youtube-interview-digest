@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>__TITLE__</title>
+<style>
+/* One accent colour (timecodes and the few things that need to stand out), everything else is ink + greys. */
+:root{
+  --bg:#faf9f7;--paper:#fff;--ink:#1c1b1a;--sub:#55524e;--mute:#8c8782;--line:#e6e3de;--line2:#f0eeea;
+  --accent:#b3261e;--accent-bg:#f8ecea;
+  --serif:"Songti SC","Noto Serif SC","Source Han Serif SC",Georgia,serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.8 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+b{font-weight:600}
+.wrap{max-width:1320px;margin:0 auto;padding:28px 28px 0;display:grid;grid-template-columns:420px 1fr;gap:48px;align-items:start}
+@media(max-width:1020px){.wrap{grid-template-columns:1fr;gap:24px;padding:16px}.side{position:static!important;max-height:none!important}}
+
+/* ---------- sidebar */
+.side{position:sticky;top:20px;display:flex;flex-direction:column;gap:20px;max-height:calc(100vh - 40px);overflow:auto;padding-bottom:12px;scrollbar-width:thin}
+.side>*{flex:none}
+.player{background:#000;border-radius:6px;overflow:hidden;aspect-ratio:16/9;position:relative}
+.player iframe,.player #yt{position:absolute;inset:0;width:100%;height:100%;border:0}
+.player .fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#fff;text-align:center;padding:24px;background:#111 center/cover no-repeat}
+.player .fallback::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.74)}
+.player .fallback>*{position:relative}
+.player .fallback .tip{color:#d6d3cf;max-width:300px}
+.player .fallback a{margin-top:4px;color:#fff;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.panel h4{margin:0 0 8px;font-size:12px;color:var(--mute);font-weight:500;display:flex;justify-content:space-between;align-items:baseline}
+.panel+.panel{border-top:1px solid var(--line);padding-top:16px}
+.now{font:12px var(--mono);color:var(--mute)}
+.heat svg{width:100%;height:84px;display:block;cursor:pointer}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mute);margin-top:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:2px;margin-right:5px;vertical-align:3px}
+.toc a{display:block;padding:3px 0;text-decoration:none;color:var(--sub);font-size:14px}
+.toc a:hover{color:var(--accent)}
+.chap{display:grid;grid-template-columns:62px 1fr;font-size:13px;padding:2px 0;color:var(--sub)}
+.tip{font-size:12px;color:var(--mute);line-height:1.6}
+
+/* ---------- main column: one continuous document, sections separated by rules */
+main{min-width:0;max-width:820px;padding-bottom:40px}
+.hero{padding:4px 0 28px;border-bottom:1px solid var(--ink)}
+.kicker{font-size:13px;color:var(--mute)}
+.hero h1{font-family:var(--serif);font-size:30px;line-height:1.35;font-weight:700;margin:6px 0 6px;letter-spacing:.01em}
+.orig{font-size:13px;color:var(--mute);margin-bottom:14px}
+.metaline{font-size:13px;color:var(--sub)}
+.metaline span+span::before{content:"·";margin:0 8px;color:var(--mute)}
+.people{font-size:13px;color:var(--sub);margin-top:2px}
+.oneliner{margin:22px 0 0;font-family:var(--serif);font-size:20px;line-height:1.6;font-weight:600}
+.kw{margin-top:12px;font-size:13px;color:var(--mute)}
+
+section{padding:34px 0 30px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+section:last-of-type{border-bottom:0}
+section>h2{font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:.01em}
+section>.desc{color:var(--mute);font-size:13px;margin:0 0 18px}
+section>h2+*:not(.desc){margin-top:16px}
+h3.sub{font-size:13px;font-weight:600;color:var(--mute);margin:26px 0 6px;letter-spacing:.04em}
+
+/* list rows: timecode column + text */
+ul.clean{list-style:none;padding:0;margin:0}
+ul.clean>li{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:7px 0;border-top:1px solid var(--line2)}
+ul.clean>li:first-child{border-top:0}
+
+/* timecode: plain monospace link in the accent colour */
+a.ts{font:500 13px/1.8 var(--mono);color:var(--accent);text-decoration:none;white-space:nowrap;border-radius:3px}
+a.ts:hover{text-decoration:underline;text-underline-offset:3px}
+a.ts.inline{font-size:.9em;margin:0 1px}
+a.ts.playing{background:var(--accent-bg)}
+
+/* value */
+.value{display:grid;grid-template-columns:110px 1fr;gap:24px;align-items:start}
+.score{padding-top:2px}
+.score b{font-family:var(--serif);font-size:44px;line-height:1;font-weight:700}
+.score span{font-size:14px;color:var(--mute);margin-left:2px}
+.score small{display:block;font-size:12px;color:var(--mute);margin-top:6px}
+.who{font-size:14px;color:var(--sub);margin-bottom:8px}
+.who em{font-style:normal;color:var(--mute)}
+.caveat{margin-top:18px;font-size:13px;color:var(--sub);border-left:2px solid var(--line);padding:2px 0 2px 14px}
+.caveat em{font-style:normal;color:var(--mute);display:block;margin-bottom:2px}
+
+/* framework timeline */
+.tl{position:relative;padding-left:20px}
+.tl::before{content:"";position:absolute;left:3px;top:10px;bottom:10px;width:1px;background:var(--line)}
+.node{position:relative;padding-bottom:22px}
+.node::before{content:"";position:absolute;left:-20px;top:11px;width:7px;height:7px;border-radius:50%;background:var(--ink)}
+.node h3{margin:0;font-size:16px;font-weight:600;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.node .range{font:12px var(--mono);color:var(--mute);font-weight:400}
+.node p{margin:4px 0 6px;color:var(--sub)}
+.node ul{margin:0;padding:0;list-style:none}
+.node li{display:grid;grid-template-columns:64px 1fr;gap:10px;font-size:14px;padding:1px 0}
+
+/* viewpoints */
+.vp{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0 36px}
+.vcard{padding:14px 0;border-top:1px solid var(--line2)}
+.vcard h3{margin:0 0 4px;font-size:15px;font-weight:600;display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.vcard p{margin:0;color:var(--sub);font-size:14px}
+.vcard .ev{margin-top:6px;font-size:13px;color:var(--mute)}
+.speaker{font-size:12px;color:var(--mute);margin-bottom:2px}
+
+/* quotes */
+.quotes{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:22px 36px}
+blockquote{margin:0;padding:0 0 0 16px;border-left:2px solid var(--line)}
+blockquote .zh{font-family:var(--serif);font-size:17px;font-weight:600;line-height:1.65}
+blockquote .en{font-size:13px;color:var(--mute);margin-top:4px;font-style:italic}
+blockquote .why{font-size:13px;color:var(--sub);margin-top:6px}
+blockquote footer{display:flex;gap:10px;align-items:baseline;margin-top:6px;font-size:12px;color:var(--mute)}
+
+/* conflicts */
+.cf{padding:18px 0;border-top:1px solid var(--line2)}
+.cf:first-of-type{border-top:0;padding-top:4px}
+.cf h3{margin:0 0 10px;font-size:16px;font-weight:600}
+.ctype{font-size:12px;color:var(--mute);font-weight:400;margin-left:10px}
+.vs{display:grid;grid-template-columns:1fr 1px 1fr;gap:18px;align-items:stretch}
+.vsx{background:var(--line)}
+.side-a,.side-b{font-size:14px;color:var(--ink)}
+.side-a b,.side-b b{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-bottom:2px}
+.cf .an{margin-top:12px;font-size:14px;color:var(--sub)}
+.cf .an em,.hs .sup em{font-style:normal;color:var(--ink);font-weight:600;margin-right:6px}
+@media(max-width:640px){.vs{grid-template-columns:1fr}.vsx{display:none}.value{grid-template-columns:1fr}}
+
+/* hotspots */
+.hs{display:grid;grid-template-columns:64px 1fr;gap:4px 14px;padding:18px 0;border-top:1px solid var(--line2)}
+.hs:first-of-type{border-top:0;padding-top:4px}
+.hs .meter{grid-row:span 3;padding-top:2px}
+.hs .meter b{display:block;font:600 20px/1.1 var(--mono)}
+.hs .meter .bar{height:2px;background:var(--line);margin:6px 0 3px;width:48px}
+.hs .meter .bar i{display:block;height:2px;background:var(--accent)}
+.hs .meter small{font-size:11px;color:var(--mute)}
+.hs h3{margin:0;font-size:16px;font-weight:600;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.hs .range{font:12px var(--mono);color:var(--mute);font-weight:400}
+.src{font-size:12px;color:var(--mute);font-weight:400}
+.hs p{margin:0;color:var(--sub);font-size:14px}
+.hs .sup{font-size:14px;color:var(--sub);margin-top:6px}
+.cmts{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.cmt{font-size:13px;color:var(--sub);padding-left:12px;border-left:2px solid var(--line)}
+.cmt em{font-style:normal;color:var(--mute);font-size:12px;margin-left:8px;white-space:nowrap}
+
+/* comment insights */
+.ci{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0 36px}
+.ci>div{padding:14px 0;border-top:1px solid var(--line2)}
+.ci h3{margin:0 0 4px;font-size:15px;font-weight:600;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.stance{font-size:12px;color:var(--mute);font-weight:400;white-space:nowrap}
+.ci p{margin:0;font-size:14px;color:var(--sub)}
+.ci .meta{margin-top:4px;font-size:12px;color:var(--mute);display:flex;gap:10px;align-items:baseline}
+
+/* resources / glossary */
+.res b{font-weight:600}
+.res .note{color:var(--sub)}
+
+/* transcript */
+.tr-tools{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tr-tools input{flex:1;min-width:180px;border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:14px;background:var(--paper)}
+.tr-tools input:focus{outline:none;border-color:var(--ink)}
+.tr-tools button{border:1px solid var(--line);background:var(--paper);border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--sub)}
+.tr-tools button.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+.tr{max-height:720px;overflow:auto;padding-right:8px;border-top:1px solid var(--line)}
+.tr .row{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line2)}
+.tr .row.active{background:#fbf6e9}
+.tr .row.hide{display:none}
+.tr .spk{font-size:12px;color:var(--mute);font-weight:600;margin-right:6px}
+.tr .en{display:none;color:var(--mute);font-size:13px;margin-top:2px}
+.tr.bi .en{display:block}
+mark{background:#f6e3a1;padding:0 1px}
+.foot{color:var(--mute);font-size:12px;padding:24px 0 48px;border-top:1px solid var(--ink);margin-top:8px}
+.foot a{text-underline-offset:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="side">
+    <div class="player">
+      <div id="yt"></div>
+      <div class="fallback" id="fallback">
+        <div style="font-weight:600" id="fbmsg">视频无法在页面内播放</div>
+        <div class="tip" id="fbtip">点时间码会在新标签页打开 YouTube，并跳到对应位置。</div>
+        <a id="openyt" target="_blank" rel="noopener">在 YouTube 打开</a>
+      </div>
+    </div>
+    <div class="panel heat" id="heatPanel">
+      <h4><span>观看热度</span><span class="now" id="nowTs"></span></h4>
+      <div id="heatSvg"></div>
+      <div class="legend"><span><i style="background:#c9c4bd"></i>重复观看</span><span><i style="background:var(--ink);height:6px;width:6px;border-radius:50%;vertical-align:1px"></i>评论里提到的时间</span><span><i style="background:var(--accent)"></i>讨论热点</span></div>
+    </div>
+    <div class="panel toc" id="toc"><h4>目录</h4></div>
+    <div class="panel" id="chapters" style="display:none"><h4>视频章节</h4></div>
+  </aside>
+  <main id="main"></main>
+</div>
+<script type="application/json" id="data">__DATA_JSON__</script>
+<script>
+(function(){
+const D = JSON.parse(document.getElementById('data').textContent);
+const M = D.meta || {}, G = D.digest || {}, S = D.signals || {};
+const VID = M.id;
+const DUR = M.duration || 0;
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- time helpers */
+function sec(v){
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return v;
+  const s = String(v).trim().replace(/^\[|\]$/g,'');
+  if (/^\d+(\.\d+)?s?$/.test(s)) return parseFloat(s);
+  const p = s.split(':').map(Number); if (p.some(isNaN)) return null;
+  return p.length === 3 ? p[0]*3600+p[1]*60+p[2] : p[0]*60+p[1];
+}
+function fmt(t){ t = Math.max(0, Math.round(t)); const h=Math.floor(t/3600), m=Math.floor(t%3600/60), s=t%60;
+  return (h? h+':'+String(m).padStart(2,'0') : String(m).padStart(2,'0'))+':'+String(s).padStart(2,'0'); }
+function link(t){ return VID ? `https://www.youtube.com/watch?v=${VID}&t=${Math.floor(t)}s` : '#'; }
+function ts(v, cls){ const t = sec(v); if (t == null) return ''; return `<a class="ts ${cls||''}" data-t="${t}" href="${link(t)}" target="_blank" rel="noopener">${fmt(t)}</a>`; }
+const cell = v => ts(v) || '<span></span>';
+/* inline [mm:ss] / [h:mm:ss] in any text => timecode link */
+function rich(text){
+  return esc(text).replace(/\[((?:\d{1,2}:)?\d{1,2}:\d{2})(?:\s*[-–~]\s*(?:\d{1,2}:)?\d{1,2}:\d{2})?\]/g, (m, a) => ts(a, 'inline'))
+                  .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+}
+const num = n => n == null ? '—' : n >= 1e8 ? (n/1e8).toFixed(1).replace(/\.0$/,'')+' 亿' : n >= 1e4 ? (n/1e4).toFixed(1).replace(/\.0$/,'')+' 万' : String(n);
+/* if every item has the same speaker, say it once in the section note instead of on every card */
+const soleSpeaker = arr => { const s = [...new Set((arr||[]).map(x=>x.speaker).filter(Boolean))]; return s.length === 1 && (arr||[]).every(x=>x.speaker) ? s[0] : null; };
+function sourceLabel(src){
+  if (!src) return '';
+  let m;
+  if ((m = src.match(/^substack:([^/]+)/))) return `${m[1].replace(/^www\./,'')} 发布的播客转写`;
+  if ((m = src.match(/^yt-dlp:([\w-]+):(manual|auto)/))) return `YouTube ${m[2]==='auto'?'自动':'人工'}字幕（${m[1]}）`;
+  if (src.startsWith('transcript-api')) return 'YouTube 字幕';
+  if (src.startsWith('local:')) return '用户提供的字幕文件';
+  return src;
+}
+
+/* ---------- hero */
+const main = $('#main'); let html = '';
+const d = M.upload_date ? `${M.upload_date.slice(0,4)}-${M.upload_date.slice(4,6)}-${M.upload_date.slice(6,8)}` : '';
+const guests = (G.guests||[]).map(g => `${esc(g.name)}${g.role? '，'+esc(g.role):''}`).join('；');
+const meta = [M.channel && esc(M.channel), d, DUR && fmt(DUR),
+  M.view_count!=null && `${num(M.view_count)}次观看`, M.like_count!=null && `${num(M.like_count)}赞`,
+  M.comment_count!=null && `${num(M.comment_count)} 条评论`].filter(Boolean);
+html += `<header class="hero"><div class="kicker">访谈精读${M.channel? ' · '+esc(M.channel):''}</div>
+  <h1>${esc(G.title_zh || M.title)}</h1>
+  ${G.title_zh && M.title ? `<div class="orig">${esc(M.title)}</div>`:''}
+  <div class="metaline">${meta.map(x=>`<span>${x}</span>`).join('')}</div>
+  ${guests || G.host ? `<div class="people">${guests? '嘉宾：'+guests:''}${guests && G.host? '　':''}${G.host? '主持：'+esc(G.host):''}</div>`:''}
+  ${G.one_liner? `<p class="oneliner">${rich(G.one_liner)}</p>`:''}
+  ${(G.keywords||[]).length? `<div class="kw">${G.keywords.map(esc).join('、')}</div>`:''}
+</header>`;
+
+const secs = [];
+function section(id, title, desc, body){ if (!body) return; secs.push([id,title]);
+  html += `<section id="${id}"><h2>${title}</h2>${desc? `<p class="desc">${desc}</p>`:''}${body}</section>`; }
+const rows = (items, key='text') => `<ul class="clean">${items.map(x=>`<li>${cell(x.t)}<div>${rich(x[key])}</div></li>`).join('')}</ul>`;
+
+/* ---------- conclusion + value */
+if ((G.tldr||[]).length || G.value){
+  let b = '';
+  const V = G.value || {};
+  if (V.score != null || V.why){
+    const sc = Number(V.score||0);
+    b += `<div class="value"><div class="score"><b>${sc? sc.toFixed(1):'—'}</b><span>/ 5</span><small>值得看的程度</small></div><div>
+      ${(V.for_whom||[]).length? `<div class="who"><em>适合：</em>${V.for_whom.map(esc).join('；')}</div>`:''}
+      ${V.why? `<div>${rich(V.why)}</div>`:''}
+    </div></div>`;
+  }
+  if ((G.tldr||[]).length) b += `<h3 class="sub">要点</h3>${rows(G.tldr)}`;
+  if ((V.takeaways||[]).length) b += `<h3 class="sub">可以直接拿去用的</h3>${rows(V.takeaways)}`;
+  if (V.caveats) b += `<div class="caveat"><em>读之前需要知道</em>${rich(V.caveats)}</div>`;
+  section('summary','结论', '', b);
+}
+
+/* ---------- framework */
+if ((G.framework||[]).length){
+  const F = G.framework;
+  const b = `<div class="tl">${F.map(f=>`<div class="node"><h3>${ts(f.start)}<span>${esc(f.title)}</span>${f.end!=null? `<span class="range">至 ${fmt(sec(f.end))}</span>`:''}</h3>
+    ${f.summary? `<p>${rich(f.summary)}</p>`:''}
+    ${(f.points||[]).length? `<ul>${f.points.map(p=>`<li>${cell(p.t)}<span>${rich(p.text)}</span></li>`).join('')}</ul>`:''}</div>`).join('')}</div>`;
+  section('framework','内容结构', `按视频顺序分成 ${F.length} 段。`, b);
+}
+
+/* ---------- viewpoints */
+if ((G.viewpoints||[]).length){
+  const one = soleSpeaker(G.viewpoints);
+  const b = `<div class="vp">${G.viewpoints.map(v=>`<div class="vcard">
+    ${!one && v.speaker? `<div class="speaker">${esc(v.speaker)}</div>`:''}
+    <h3><span>${esc(v.title)}</span>${ts(v.t)}</h3>
+    <p>${rich(v.detail||'')}</p>${v.evidence? `<div class="ev">依据：${rich(v.evidence)}</div>`:''}</div>`).join('')}</div>`;
+  section('viewpoints','主要观点', one? `以下都是 ${esc(one)} 的观点。`:'', b);
+}
+
+/* ---------- quotes */
+if ((G.quotes||[]).length){
+  const one = soleSpeaker(G.quotes);
+  const b = `<div class="quotes">${G.quotes.map(q=>`<blockquote><div class="zh">${esc(q.zh)}</div>${q.en? `<div class="en">${esc(q.en)}</div>`:''}
+    ${q.why? `<div class="why">${rich(q.why)}</div>`:''}<footer>${ts(q.t)}${!one && q.speaker? `<span>${esc(q.speaker)}</span>`:''}</footer></blockquote>`).join('')}</div>`;
+  section('quotes','金句', `${one? esc(one)+' 的原话，':''}英文与字幕逐句核对过。`, b);
+}
+
+/* ---------- conflicts */
+if ((G.conflicts||[]).length){
+  const C = G.conflicts;
+  const inner = C.filter(c=>/隐含|矛盾/.test(c.type||'')).length;
+  const sideHtml = (s) => s ? `<div class="${'side'}"><b>${esc(s.who||'')} ${ts(s.t,'inline')}</b>${rich(s.claim||'')}</div>` : '<div></div>';
+  const b = C.map(c=>`<div class="cf"><h3>${esc(c.topic)}${c.type? `<span class="ctype">${esc(c.type)}</span>`:''}</h3>
+    <div class="vs">${sideHtml(c.a).replace('class="side"','class="side-a"')}<div class="vsx"></div>${sideHtml(c.b).replace('class="side"','class="side-b"')}</div>
+    ${c.analysis? `<div class="an"><em>怎么看</em>${rich(c.analysis)}</div>`:''}</div>`).join('');
+  section('conflicts','观点冲突', `共 ${C.length} 组${inner? `，其中 ${inner} 组是嘉宾自己说法之间的张力`:''}。`, b);
+}
+
+/* ---------- hotspots */
+if ((G.hotspots||[]).length){
+  const srcName = {heatmap:'回看高峰', comments:'评论提到', content:'内容判断'};
+  const b = G.hotspots.map(h=>{
+    const v = Math.round(Math.min(1, Math.max(0, Number(h.heat||0)))*100);
+    const srcs = [].concat(h.source||[]).map(s=>srcName[s]||esc(s)).join(' + ');
+    return `<div class="hs"><div class="meter"><b>${v}</b><div class="bar"><i style="width:${v}%"></i></div><small>热度</small></div>
+      <h3>${ts(h.t)}<span>${esc(h.title)}</span>${h.end? `<span class="range">至 ${fmt(sec(h.end))}</span>`:''}${srcs? `<span class="src">${srcs}</span>`:''}</h3>
+      <p>${rich(h.why||'')}</p>
+      <div>${h.supplement? `<div class="sup"><em>补充</em>${rich(h.supplement)}</div>`:''}
+      ${(h.comments||[]).length? `<div class="cmts">${h.comments.map(c=>`<div class="cmt">${esc(c.text_zh||c.text)}<em>${c.likes? num(c.likes)+' 赞':''}</em></div>`).join('')}</div>`:''}</div></div>`;
+  }).join('');
+  const basis = [ (S.heatmap||[]).length && '重复观看曲线', S.timestamp_mentions && `评论里的 ${S.timestamp_mentions} 处时间戳` ].filter(Boolean).join('和');
+  section('hotspots','讨论热点', basis? `根据${basis}找出观众最在意的片段。热度以全片最高点为 100。`:'', b);
+}
+
+/* ---------- comment insights */
+if ((G.comment_insights||[]).length){
+  const b = `<div class="ci">${G.comment_insights.map(c=>`<div><h3><span>${esc(c.theme)}</span>${c.stance? `<span class="stance">${esc(c.stance)}</span>`:''}</h3>
+    <p>${rich(c.summary||'')}</p><div class="meta">${ts(c.t)}${c.likes? `<span>代表评论 ${num(c.likes)} 赞</span>`:''}</div></div>`).join('')}</div>`;
+  section('comments','评论区', S.comments_analyzed? `从 ${S.comments_analyzed} 条热门评论里归纳${M.comment_count? `（总共 ${num(M.comment_count)} 条）`:''}。`:'', b);
+}
+
+/* ---------- resources */
+if ((G.resources||[]).length){
+  const b = `<ul class="clean res">${G.resources.map(r=>`<li>${cell(r.t)}<div><b>${esc(r.name)}</b>${r.note? `<span class="note">，${rich(r.note)}</span>`:''}</div></li>`).join('')}</ul>`;
+  section('resources','提到的书和资源', '', b);
+}
+if ((G.glossary||[]).length){
+  const b = `<ul class="clean res">${G.glossary.map(g=>`<li><span class="tip" style="padding-top:3px">术语</span><div><b>${esc(g.term)}</b>：${esc(g.zh||'')}${g.note? `<span class="note">。${rich(g.note)}</span>`:''}</div></li>`).join('')}</ul>`;
+  section('glossary','术语与更正', '', b);
+}
+
+/* ---------- transcript */
+const TR = D.transcript || [];
+if (TR.length){
+  const hasEn = TR.some(r=>r.en);
+  const b = `<div class="tr-tools"><input id="q" placeholder="搜索译稿或英文原文">${hasEn? '<button id="bi">显示英文</button>':''}<button id="follow" class="on">跟随播放</button></div>
+    <div class="tr" id="tr">${TR.map((r,i)=>`<div class="row" data-i="${i}" data-t="${sec(r.t)}">${cell(r.t)}<div>${r.speaker? `<span class="spk">${esc(r.speaker)}</span>`:''}<span class="zh">${esc(r.zh||r.en||'')}</span>${r.en&&r.zh? `<div class="en">${esc(r.en)}</div>`:''}</div></div>`).join('')}</div>`;
+  section('transcript','全文译稿', `${TR.length} 段，播放时会自动滚到当前位置。`, b);
+}
+
+const src = sourceLabel(M.subtitle_source);
+const snap = M.snapshot_date || D.generated_at;
+html += `<footer class="foot"><a href="${esc(M.url||link(0))}" target="_blank" rel="noopener">原视频</a>${src? '　字幕：'+esc(src):''}${snap? '　数据截至 '+esc(snap):''}　由 youtube-interview-digest 生成</footer>`;
+main.innerHTML = html;
+
+/* ---------- toc & chapters */
+$('#toc').insertAdjacentHTML('beforeend', secs.map(([id,t])=>`<a href="#${id}">${t}</a>`).join(''));
+if ((M.chapters||[]).length){ const c=$('#chapters'); c.style.display='';
+  c.insertAdjacentHTML('beforeend', M.chapters.map(x=>`<div class="chap">${ts(x.start)}<span>${esc(x.title)}</span></div>`).join('')); }
+
+/* ---------- heat svg */
+(function(){
+  const H = S.heatmap || [], W = 400, HH = 84, total = DUR || (H.length? H[H.length-1].end : 0);
+  if (!total){ $('#heatPanel').style.display='none'; return; }
+  const x = t => (t/total)*W;
+  let svg = `<svg viewBox="0 0 ${W} ${HH}" preserveAspectRatio="none" id="heat">`;
+  if (H.length){
+    const pts = H.map(h=>`${x((h.start+h.end)/2).toFixed(1)},${(HH-16 - h.value*(HH-24)).toFixed(1)}`);
+    svg += `<polygon points="0,${HH-16} ${pts.join(' ')} ${W},${HH-16}" fill="#e9e6e1"/><polyline points="${pts.join(' ')}" fill="none" stroke="#9c968f" stroke-width="1"/>`;
+  } else {
+    svg += `<text x="${W/2}" y="${HH/2}" text-anchor="middle" font-size="11" fill="#8c8782">这个视频没有重复观看数据</text>`;
+  }
+  svg += `<line x1="0" x2="${W}" y1="${HH-16}" y2="${HH-16}" stroke="#d8d4ce" stroke-width="1"/>`;
+  (S.comment_anchors||[]).forEach(a=>{ const r = Math.min(3.5, 1.6+Math.log2(1+a.mentions)*0.8);
+    svg += `<circle cx="${x(a.t).toFixed(1)}" cy="${HH-9}" r="${r.toFixed(1)}" fill="#1c1b1a"><title>${fmt(a.t)}，${a.mentions} 条评论提到</title></circle>`; });
+  (G.hotspots||[]).forEach((h,i)=>{ const t=sec(h.t); if(t==null) return;
+    svg += `<line x1="${x(t)}" x2="${x(t)}" y1="10" y2="${HH-16}" stroke="#b3261e" stroke-width="1"/><text x="${Math.min(W-8,x(t)+3)}" y="9" font-size="9" fill="#b3261e" font-family="ui-monospace,Menlo,monospace">${i+1}</text>`; });
+  svg += `<line id="cursor" x1="0" x2="0" y1="0" y2="${HH-16}" stroke="#1c1b1a" stroke-width="1" opacity="0"/>`;
+  svg += `<text x="0" y="${HH}" font-size="9" fill="#8c8782" font-family="ui-monospace,Menlo,monospace">00:00</text><text x="${W}" y="${HH}" font-size="9" fill="#8c8782" text-anchor="end" font-family="ui-monospace,Menlo,monospace">${fmt(total)}</text></svg>`;
+  $('#heatSvg').innerHTML = svg;
+  $('#heat').addEventListener('click', e=>{ const r=e.currentTarget.getBoundingClientRect(); jump(((e.clientX-r.left)/r.width)*total); });
+  window.__heatCursor = t => { const c=$('#cursor'); if(c){ c.setAttribute('x1',x(t)); c.setAttribute('x2',x(t)); c.setAttribute('opacity','.7'); } };
+})();
+
+/* ---------- player */
+let player = null, ready = false, broken = false, lastSeek = 0;
+$('#openyt').href = link(0);
+if (M.thumbnail) $('#fallback').style.backgroundImage = `url("${M.thumbnail}")`;
+function showFallback(e){
+  broken = true; window.__ytErr = e && e.data != null ? e.data : (e||'timeout');
+  const m=$('#fbmsg'), tip=$('#fbtip');
+  if (m && e && e.data!=null) m.textContent = ({101:'作者关闭了内嵌播放',150:'视频无法在页面内播放',153:'本地打开的文件无法内嵌播放'}[e.data]||'视频无法在页面内播放')+`（错误 ${e.data}）`;
+  if (tip && e && (e.data===150||e.data===101)) tip.textContent = '可能是作者关闭了内嵌，也可能是当前网络受 YouTube 限制。点时间码会在新标签页打开 YouTube，并跳到对应位置。';
+  if (tip && e && e.data===153) tip.textContent = '用本地 http 服务打开这个页面即可内嵌播放。现在点时间码会在新标签页打开 YouTube。';
+  const o=$('#openyt'); o.href = link(lastSeek); o.textContent = lastSeek ? `在 YouTube 从 ${fmt(lastSeek)} 开始看` : '在 YouTube 打开';
+  $('#fallback').style.display = 'flex'; const y=$('#yt'); if (y) y.style.visibility='hidden';
+}
+function jump(t){
+  lastSeek = t;
+  document.querySelectorAll('a.ts.playing').forEach(a=>a.classList.remove('playing'));
+  if (ready && !broken && player && player.seekTo){
+    player.seekTo(t, true); player.playVideo && player.playVideo();
+    if (window.innerWidth <= 1020) $('.player').scrollIntoView({behavior:'smooth', block:'start'});
+    return true;
+  }
+  window.open(link(t), '_blank', 'noopener'); return false;
+}
+document.addEventListener('click', e=>{
+  const a = e.target.closest('a.ts'); if (!a) return;
+  e.preventDefault(); if (jump(parseFloat(a.dataset.t))) a.classList.add('playing');
+});
+if (!VID){ showFallback(); }
+else {
+  window.onYouTubeIframeAPIReady = function(){
+    player = new YT.Player('yt', { videoId: VID, playerVars: { rel: 0, modestbranding: 1, playsinline: 1, origin: location.protocol.startsWith('http')? location.origin: undefined },
+      events: { onReady: ()=>{ ready = true; }, onError: showFallback } });
+  };
+  const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; s.onerror = showFallback; document.head.appendChild(s);
+  setTimeout(()=>{ if (!ready) showFallback(); }, 12000);
+}
+
+/* ---------- follow playback in transcript */
+const trRows = [...document.querySelectorAll('#tr .row')];
+let follow = true;
+setInterval(()=>{
+  if (!ready || broken || !player.getCurrentTime) return;
+  const t = player.getCurrentTime(); $('#nowTs').textContent = fmt(t); window.__heatCursor && window.__heatCursor(t);
+  if (!trRows.length || !follow) return;
+  let k = 0; for (let i=0;i<trRows.length;i++){ if (parseFloat(trRows[i].dataset.t) <= t) k = i; else break; }
+  const cur = document.querySelector('#tr .row.active');
+  if (cur !== trRows[k]){ cur && cur.classList.remove('active'); trRows[k].classList.add('active');
+    const box = $('#tr'); box.scrollTo({ top: trRows[k].offsetTop - box.offsetTop - 120, behavior: 'smooth' }); }
+}, 800);
+const q = $('#q'); if (q) q.addEventListener('input', ()=>{
+  const v = q.value.trim().toLowerCase();
+  trRows.forEach(r=>{ const zh=r.querySelector('.zh'), en=r.querySelector('.en');
+    if (!zh.dataset.o) zh.dataset.o = zh.textContent; if (en && !en.dataset.o) en.dataset.o = en.textContent;
+    const hit = !v || zh.dataset.o.toLowerCase().includes(v) || (en && en.dataset.o.toLowerCase().includes(v));
+    r.classList.toggle('hide', !hit);
+    const hl = s => v ? esc(s).replace(new RegExp(v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark>${m}</mark>`) : esc(s);
+    zh.innerHTML = hl(zh.dataset.o); if (en) en.innerHTML = hl(en.dataset.o); });
+});
+const bi = $('#bi'); if (bi) bi.addEventListener('click', ()=>{ const on = $('#tr').classList.toggle('bi'); bi.classList.toggle('on', on); bi.textContent = on? '隐藏英文':'显示英文'; });
+const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !follow; fo.classList.toggle('on', follow); });
+})();
+</script>
+</body>
+</html>

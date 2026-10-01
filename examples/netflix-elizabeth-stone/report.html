@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Netflix 为什么在 AI 时代多招系统思考者、少招专才｜Elizabeth Stone</title>
+<style>
+/* One accent colour (timecodes and the few things that need to stand out), everything else is ink + greys. */
+:root{
+  --bg:#faf9f7;--paper:#fff;--ink:#1c1b1a;--sub:#55524e;--mute:#8c8782;--line:#e6e3de;--line2:#f0eeea;
+  --accent:#b3261e;--accent-bg:#f8ecea;
+  --serif:"Songti SC","Noto Serif SC","Source Han Serif SC",Georgia,serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.8 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+b{font-weight:600}
+.wrap{max-width:1320px;margin:0 auto;padding:28px 28px 0;display:grid;grid-template-columns:420px 1fr;gap:48px;align-items:start}
+@media(max-width:1020px){.wrap{grid-template-columns:1fr;gap:24px;padding:16px}.side{position:static!important;max-height:none!important}}
+
+/* ---------- sidebar */
+.side{position:sticky;top:20px;display:flex;flex-direction:column;gap:20px;max-height:calc(100vh - 40px);overflow:auto;padding-bottom:12px;scrollbar-width:thin}
+.side>*{flex:none}
+.player{background:#000;border-radius:6px;overflow:hidden;aspect-ratio:16/9;position:relative}
+.player iframe,.player #yt{position:absolute;inset:0;width:100%;height:100%;border:0}
+.player .fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#fff;text-align:center;padding:24px;background:#111 center/cover no-repeat}
+.player .fallback::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.74)}
+.player .fallback>*{position:relative}
+.player .fallback .tip{color:#d6d3cf;max-width:300px}
+.player .fallback a{margin-top:4px;color:#fff;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.panel h4{margin:0 0 8px;font-size:12px;color:var(--mute);font-weight:500;display:flex;justify-content:space-between;align-items:baseline}
+.panel+.panel{border-top:1px solid var(--line);padding-top:16px}
+.now{font:12px var(--mono);color:var(--mute)}
+.heat svg{width:100%;height:84px;display:block;cursor:pointer}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mute);margin-top:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:2px;margin-right:5px;vertical-align:3px}
+.toc a{display:block;padding:3px 0;text-decoration:none;color:var(--sub);font-size:14px}
+.toc a:hover{color:var(--accent)}
+.chap{display:grid;grid-template-columns:62px 1fr;font-size:13px;padding:2px 0;color:var(--sub)}
+.tip{font-size:12px;color:var(--mute);line-height:1.6}
+
+/* ---------- main column: one continuous document, sections separated by rules */
+main{min-width:0;max-width:820px;padding-bottom:40px}
+.hero{padding:4px 0 28px;border-bottom:1px solid var(--ink)}
+.kicker{font-size:13px;color:var(--mute)}
+.hero h1{font-family:var(--serif);font-size:30px;line-height:1.35;font-weight:700;margin:6px 0 6px;letter-spacing:.01em}
+.orig{font-size:13px;color:var(--mute);margin-bottom:14px}
+.metaline{font-size:13px;color:var(--sub)}
+.metaline span+span::before{content:"·";margin:0 8px;color:var(--mute)}
+.people{font-size:13px;color:var(--sub);margin-top:2px}
+.oneliner{margin:22px 0 0;font-family:var(--serif);font-size:20px;line-height:1.6;font-weight:600}
+.kw{margin-top:12px;font-size:13px;color:var(--mute)}
+
+section{padding:34px 0 30px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+section:last-of-type{border-bottom:0}
+section>h2{font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:.01em}
+section>.desc{color:var(--mute);font-size:13px;margin:0 0 18px}
+section>h2+*:not(.desc){margin-top:16px}
+h3.sub{font-size:13px;font-weight:600;color:var(--mute);margin:26px 0 6px;letter-spacing:.04em}
+
+/* list rows: timecode column + text */
+ul.clean{list-style:none;padding:0;margin:0}
+ul.clean>li{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:7px 0;border-top:1px solid var(--line2)}
+ul.clean>li:first-child{border-top:0}
+
+/* timecode: plain monospace link in the accent colour */
+a.ts{font:500 13px/1.8 var(--mono);color:var(--accent);text-decoration:none;white-space:nowrap;border-radius:3px}
+a.ts:hover{text-decoration:underline;text-underline-offset:3px}
+a.ts.inline{font-size:.9em;margin:0 1px}
+a.ts.playing{background:var(--accent-bg)}
+
+/* value */
+.value{display:grid;grid-template-columns:110px 1fr;gap:24px;align-items:start}
+.score{padding-top:2px}
+.score b{font-family:var(--serif);font-size:44px;line-height:1;font-weight:700}
+.score span{font-size:14px;color:var(--mute);margin-left:2px}
+.score small{display:block;font-size:12px;color:var(--mute);margin-top:6px}
+.who{font-size:14px;color:var(--sub);margin-bottom:8px}
+.who em{font-style:normal;color:var(--mute)}
+.caveat{margin-top:18px;font-size:13px;color:var(--sub);border-left:2px solid var(--line);padding:2px 0 2px 14px}
+.caveat em{font-style:normal;color:var(--mute);display:block;margin-bottom:2px}
+
+/* framework timeline */
+.tl{position:relative;padding-left:20px}
+.tl::before{content:"";position:absolute;left:3px;top:10px;bottom:10px;width:1px;background:var(--line)}
+.node{position:relative;padding-bottom:22px}
+.node::before{content:"";position:absolute;left:-20px;top:11px;width:7px;height:7px;border-radius:50%;background:var(--ink)}
+.node h3{margin:0;font-size:16px;font-weight:600;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.node .range{font:12px var(--mono);color:var(--mute);font-weight:400}
+.node p{margin:4px 0 6px;color:var(--sub)}
+.node ul{margin:0;padding:0;list-style:none}
+.node li{display:grid;grid-template-columns:64px 1fr;gap:10px;font-size:14px;padding:1px 0}
+
+/* viewpoints */
+.vp{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0 36px}
+.vcard{padding:14px 0;border-top:1px solid var(--line2)}
+.vcard h3{margin:0 0 4px;font-size:15px;font-weight:600;display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.vcard p{margin:0;color:var(--sub);font-size:14px}
+.vcard .ev{margin-top:6px;font-size:13px;color:var(--mute)}
+.speaker{font-size:12px;color:var(--mute);margin-bottom:2px}
+
+/* quotes */
+.quotes{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:22px 36px}
+blockquote{margin:0;padding:0 0 0 16px;border-left:2px solid var(--line)}
+blockquote .zh{font-family:var(--serif);font-size:17px;font-weight:600;line-height:1.65}
+blockquote .en{font-size:13px;color:var(--mute);margin-top:4px;font-style:italic}
+blockquote .why{font-size:13px;color:var(--sub);margin-top:6px}
+blockquote footer{display:flex;gap:10px;align-items:baseline;margin-top:6px;font-size:12px;color:var(--mute)}
+
+/* conflicts */
+.cf{padding:18px 0;border-top:1px solid var(--line2)}
+.cf:first-of-type{border-top:0;padding-top:4px}
+.cf h3{margin:0 0 10px;font-size:16px;font-weight:600}
+.ctype{font-size:12px;color:var(--mute);font-weight:400;margin-left:10px}
+.vs{display:grid;grid-template-columns:1fr 1px 1fr;gap:18px;align-items:stretch}
+.vsx{background:var(--line)}
+.side-a,.side-b{font-size:14px;color:var(--ink)}
+.side-a b,.side-b b{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-bottom:2px}
+.cf .an{margin-top:12px;font-size:14px;color:var(--sub)}
+.cf .an em,.hs .sup em{font-style:normal;color:var(--ink);font-weight:600;margin-right:6px}
+@media(max-width:640px){.vs{grid-template-columns:1fr}.vsx{display:none}.value{grid-template-columns:1fr}}
+
+/* hotspots */
+.hs{display:grid;grid-template-columns:64px 1fr;gap:4px 14px;padding:18px 0;border-top:1px solid var(--line2)}
+.hs:first-of-type{border-top:0;padding-top:4px}
+.hs .meter{grid-row:span 3;padding-top:2px}
+.hs .meter b{display:block;font:600 20px/1.1 var(--mono)}
+.hs .meter .bar{height:2px;background:var(--line);margin:6px 0 3px;width:48px}
+.hs .meter .bar i{display:block;height:2px;background:var(--accent)}
+.hs .meter small{font-size:11px;color:var(--mute)}
+.hs h3{margin:0;font-size:16px;font-weight:600;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.hs .range{font:12px var(--mono);color:var(--mute);font-weight:400}
+.src{font-size:12px;color:var(--mute);font-weight:400}
+.hs p{margin:0;color:var(--sub);font-size:14px}
+.hs .sup{font-size:14px;color:var(--sub);margin-top:6px}
+.cmts{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.cmt{font-size:13px;color:var(--sub);padding-left:12px;border-left:2px solid var(--line)}
+.cmt em{font-style:normal;color:var(--mute);font-size:12px;margin-left:8px;white-space:nowrap}
+
+/* comment insights */
+.ci{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0 36px}
+.ci>div{padding:14px 0;border-top:1px solid var(--line2)}
+.ci h3{margin:0 0 4px;font-size:15px;font-weight:600;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.stance{font-size:12px;color:var(--mute);font-weight:400;white-space:nowrap}
+.ci p{margin:0;font-size:14px;color:var(--sub)}
+.ci .meta{margin-top:4px;font-size:12px;color:var(--mute);display:flex;gap:10px;align-items:baseline}
+
+/* resources / glossary */
+.res b{font-weight:600}
+.res .note{color:var(--sub)}
+
+/* transcript */
+.tr-tools{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tr-tools input{flex:1;min-width:180px;border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:14px;background:var(--paper)}
+.tr-tools input:focus{outline:none;border-color:var(--ink)}
+.tr-tools button{border:1px solid var(--line);background:var(--paper);border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--sub)}
+.tr-tools button.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+.tr{max-height:720px;overflow:auto;padding-right:8px;border-top:1px solid var(--line)}
+.tr .row{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line2)}
+.tr .row.active{background:#fbf6e9}
+.tr .row.hide{display:none}
+.tr .spk{font-size:12px;color:var(--mute);font-weight:600;margin-right:6px}
+.tr .en{display:none;color:var(--mute);font-size:13px;margin-top:2px}
+.tr.bi .en{display:block}
+mark{background:#f6e3a1;padding:0 1px}
+.foot{color:var(--mute);font-size:12px;padding:24px 0 48px;border-top:1px solid var(--ink);margin-top:8px}
+.foot a{text-underline-offset:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="side">
+    <div class="player">
+      <div id="yt"></div>
+      <div class="fallback" id="fallback">
+        <div style="font-weight:600" id="fbmsg">视频无法在页面内播放</div>
+        <div class="tip" id="fbtip">点时间码会在新标签页打开 YouTube，并跳到对应位置。</div>
+        <a id="openyt" target="_blank" rel="noopener">在 YouTube 打开</a>
+      </div>
+    </div>
+    <div class="panel heat" id="heatPanel">
+      <h4><span>观看热度</span><span class="now" id="nowTs"></span></h4>
+      <div id="heatSvg"></div>
+      <div class="legend"><span><i style="background:#c9c4bd"></i>重复观看</span><span><i style="background:var(--ink);height:6px;width:6px;border-radius:50%;vertical-align:1px"></i>评论里提到的时间</span><span><i style="background:var(--accent)"></i>讨论热点</span></div>
+    </div>
+    <div class="panel toc" id="toc"><h4>目录</h4></div>
+    <div class="panel" id="chapters" style="display:none"><h4>视频章节</h4></div>
+  </aside>
+  <main id="main"></main>
+</div>
+<script type="application/json" id="data">{"meta": {"id": "t0GiTyz4syY", "url": "https://www.youtube.com/watch?v=t0GiTyz4syY", "title": "Why Netflix is betting on systems thinkers—not specialists—in the AI era | Elizabeth Stone (CPTO)", "channel": "Lenny's Podcast", "channel_url": "https://www.youtube.com/@LennysPodcast", "upload_date": "20260719", "duration": 4328.0, "view_count": 473444, "like_count": 10032, "comment_count": 341, "language": null, "thumbnail": "https://i.ytimg.com/vi/t0GiTyz4syY/hqdefault.jpg", "tags": [], "description": "Elizabeth Stone is the Chief Product and Technology Officer (CPTO) at Netflix, where she oversees Engineering, Product, and Design. Since her first appearance on the podcast two years ago—which remained my second-most-popular episode for more than a year—she has expanded her role to lead product, in addition to engineering. Before Netflix, Elizabeth was VP of Science at Lyft, Chief Operating Officer at Nuna, an economist at Analysis Group, and a trader at Merrill Lynch.\n\nIn our in-depth conversation, we discuss:\n1. Why “systems thinking” is now the most important skill she looks for\n2. How to manage the flood of AI-generated output without losing quality or signal\n3. How Netflix thinks about AI fluency as a universal expectation rather than a level-specific skill\n4. What “excellence as an operating system” means\n\nBrought to you by:\nWorkOS—Make your app enterprise-ready, with SSO, SCIM, RBAC, and more: https://workos.com/lenny\nMercury—Radically different banking, now with Command: https://mercury.com/\n\nEpisode transcript: https://www.lennysnewsletter.com/p/ne...\nArchive of all Lenny's Podcast transcripts: https://www.dropbox.com/scl/fo/yxi4s2...\n\nWhere to find Elizabeth Stone:\n• LinkedIn:   / elizabeth-stone-608a754  \n\nWhere to find Lenny:\n• Newsletter: https://www.lennysnewsletter.com\n• X:   / lennysan  \n• LinkedIn:   / lennyrachitsky  \n\nIn this episode, we cover:\n(00:00) Introduction\n(02:25) AI and role confusion: the storming phase before the forming phase\n(07:36) How roles have changed in the past two and a half years\n(11:55) Will functions survive? The case for craft specialism\n(13:26) What Netflix is hiring more of—and less of\n(17:22) Why systems thinking is the rising skill across every function\n(20:20) Is the design process dead?\n(22:08) Skills trending down\n(28:33) AI fluency and Netflix’s career ladder overlay\n(31:00) AI use cases beyond coding\n(35:12) Netflix’s AI history\n(38:36) Excellence as an operating system\n(41:11) The pillars of the excellence OS\n(46:41) The keeper’s test—and why it’s mostly a positive conversation\n(50:21) Attracting top talent in the age of frontier AI labs\n(52:54) Junior talent, craft mastery, and the mentorship question\n(56:25) Where engineering goes in 5 to 10 years\n(59:45) The future of entertainment: beyond film and TV\n(1:02:18) AI in Hollywood: Netflix’s creator-enablement position\n(1:06:15) Lightning round and final thoughts\n\nReferenced:\n• How Netflix builds a culture of excellence | Elizabeth Stone (CTO): https://www.lennysnewsletter.com/p/ho...\n• Brian Chesky’s new playbook: https://www.lennysnewsletter.com/p/br...\n• The design process is dead. Here’s what’s replacing it. | Jenny Wen (head of design at Claude): https://www.lennysnewsletter.com/p/th...\n• Claude Code: https://www.anthropic.com/product/cla...\n• Claude Cowork: https://www.anthropic.com/product/cla...\n• Netflix’s “Keeper Test” and Why You Need It | Lorne Rubis: https://www.highlights.lornerubis.com...\n• Innovation for Filmmaking, By Filmmakers: Why InterPositive Is Joining Netflix: https://about.netflix.com/en/news/why...\n• InterPositive: https://weareinterpositive.com\n• Netflix Prize: https://en.wikipedia.org/wiki/Netflix...\n• Quarterback on Netflix: https://www.netflix.com/title/81482895\n• The Bill Simmons Podcast on Netflix: https://www.netflix.com/title/82186214\n• Spencer Pratt on Instagram:   / spencerpratt  \n• Salman Rushdie’s Substack: https://salmanrushdie.substack.com\n• Remarkably Bright Creatures on Netflix: https://www.netflix.com/title/81911351\n• Eight Sleep: https://www.eightsleep.com\n• Tour de France: https://www.letour.fr/en\n\nRecommended books:\n• Thinking in Systems: https://www.amazon.com/Thinking-Syste...\n• Into Thin Air: A Personal Account of the Mt. Everest Disaster: https://www.amazon.com/Into-Thin-Air-...\n• Liar’s Poker: https://www.amazon.com/Liars-Poker-No...\n\nProduction and marketing by https://penname.co/.\nFor inquiries about sponsoring the podcast, email podcast@lennyrachitsky.com.\n\nLenny may be ", "description_urls": ["https://workos.com/lenny", "https://mercury.com/", "https://www.lennysnewsletter.com/p/netflix-cpto-on-ai-and-the-future", "https://www.dropbox.com/scl/fo/yxi4s2w998p1gvtpu4193/AMdNPR8AOw0lMklwtnC0TrQ?rlkey=j06x0nipoti519e0xgm23zsn9&st=ahz0fj11&dl=0", "https://www.linkedin.com/in/elizabeth-stone-608a754", "https://www.lennysnewsletter.com/", "https://twitter.com/lennysan", "https://www.linkedin.com/in/lennyrachitsky/", "https://www.lennysnewsletter.com/p/how-netflix-builds-a-culture-of-excellence", "https://www.lennysnewsletter.com/p/brian-cheskys-contrarian-approach", "https://www.lennysnewsletter.com/p/the-design-process-is-dead", "https://www.anthropic.com/product/claude-code", "https://www.anthropic.com/product/claude-cowork", "https://www.highlights.lornerubis.com/2015/08/the-netflix-keeper-test-and-the-courage-to-take-it", "https://about.netflix.com/en/news/why-interpositive-is-joining-netflix", "https://weareinterpositive.com/", "https://en.wikipedia.org/wiki/Netflix_Prize", "https://www.netflix.com/title/81482895", "https://www.netflix.com/title/82186214", "https://www.instagram.com/spencerpratt", "https://salmanrushdie.substack.com/", "https://www.netflix.com/title/81911351", "https://www.eightsleep.com/", "https://www.letour.fr/en", "https://www.amazon.com/Thinking-Systems-Donella-H-Meadows/dp/1603580557", "https://www.amazon.com/Into-Thin-Air-Personal-Disaster/dp/0385494785", "https://www.amazon.com/Liars-Poker-Norton-Paperback-Michael/dp/039333869X", "https://penname.co/", "https://www.lennysnewsletter.com", "https://weareinterpositive.com", "https://salmanrushdie.substack.com", "https://www.eightsleep.com", "https://penname.co/."], "chapters": [{"start": 0.0, "title": "Introduction", "end": 145.0, "ts": "00:00"}, {"start": 145.0, "title": "AI and role confusion: the storming phase before the forming phase", "end": 456.0, "ts": "02:25"}, {"start": 456.0, "title": "How roles have changed in the past two and a half years", "end": 715.0, "ts": "07:36"}, {"start": 715.0, "title": "Will functions survive? The case for craft specialism", "end": 806.0, "ts": "11:55"}, {"start": 806.0, "title": "What Netflix is hiring more of—and less of", "end": 1042.0, "ts": "13:26"}, {"start": 1042.0, "title": "Why systems thinking is the rising skill across every function", "end": 1220.0, "ts": "17:22"}, {"start": 1220.0, "title": "Is the design process dead?", "end": 1328.0, "ts": "20:20"}, {"start": 1328.0, "title": "Skills trending down", "end": 1713.0, "ts": "22:08"}, {"start": 1713.0, "title": "AI fluency and Netflix’s career ladder overlay", "end": 1860.0, "ts": "28:33"}, {"start": 1860.0, "title": "AI use cases beyond coding", "end": 2112.0, "ts": "31:00"}, {"start": 2112.0, "title": "Netflix’s AI history", "end": 2316.0, "ts": "35:12"}, {"start": 2316.0, "title": "Excellence as an operating system", "end": 2471.0, "ts": "38:36"}, {"start": 2471.0, "title": "The pillars of the excellence OS", "end": 2801.0, "ts": "41:11"}, {"start": 2801.0, "title": "The keeper’s test—and why it’s mostly a positive conversation", "end": 3021.0, "ts": "46:41"}, {"start": 3021.0, "title": "Attracting top talent in the age of frontier AI labs", "end": 3174.0, "ts": "50:21"}, {"start": 3174.0, "title": "Junior talent, craft mastery, and the mentorship question", "end": 3385.0, "ts": "52:54"}, {"start": 3385.0, "title": "Where engineering goes in 5 to 10 years", "end": 3585.0, "ts": "56:25"}, {"start": 3585.0, "title": "The future of entertainment: beyond film and TV", "end": 3738.0, "ts": "59:45"}, {"start": 3738.0, "title": "AI in Hollywood: Netflix’s creator-enablement position", "end": 3975.0, "ts": "1:02:18"}, {"start": 3975.0, "title": "Lightning round and final thoughts", "end": null, "ts": "1:06:15"}], "has_heatmap": true, "playability": "LOGIN_REQUIRED", "duration_text": "1:12:08", "fetch_mode": "page-fallback", "subtitle_source": "substack:www.lennysnewsletter.com/p/netflix-cpto-on-ai-and-the-future:podcastUpload", "external_transcript": {"source": "substack:www.lennysnewsletter.com/p/netflix-cpto-on-ai-and-the-future:podcastUpload", "duration": 4327.445, "speakers": ["Elizabeth Stone", "Lenny Rachitsky"], "duration_diff_s": -0.6}}, "digest": {"title_zh": "Netflix 为什么在 AI 时代多招系统思考者、少招专才｜Elizabeth Stone", "one_liner": "AI 没有让 Netflix 取消分工。它在多招能搭公共平台的人，并要求人为 AI 的产出负责。", "keywords": ["系统思维", "AI 熟练度", "paved path", "人才密度", "留任测试"], "host": "Lenny Rachitsky", "guests": [{"name": "Elizabeth Stone", "role": "Netflix 首席产品与技术官，此前任 Lyft 科学副总裁"}], "value": {"score": 3.5, "for_whom": ["在定职级和招聘标准的研发负责人", "想从单一专长往外扩的工程师、PM 和设计师", "HR 与组织发展"], "why": "Netflix 产品和技术的一把手讲了几件公司里真在做的事：给所有人（包括高管）加一条 AI 熟练度要求 [28:59]，编码面试允许用 AI [30:44]，用 paved path 和统一的数据来源应对角色流动 [14:20]。她教的系统思维练法 [25:32] 也很容易上手。不足在于几乎没有数据和失败案例，说法偏官方；50 分钟以后的内容比较散，热度曲线在这一段也明显走低。", "takeaways": [{"text": "职级不用逐级重写，给所有人加一条 AI 熟练度要求：愿意尝试、知道什么时候不该用、真的用它做出过东西。", "t": "28:59"}, {"text": "编码面试可以允许候选人用 AI，同时聊聊他们平时怎么用、怎么看待这些工具。", "t": "30:44"}, {"text": "动手前先退一步，问自己对更大的问题做了哪些假设。退一步就够了，不用上升到公司战略。", "t": "25:32"}, {"text": "放开角色边界之前，先定好几件事：数据以哪份为准，哪些 AI 产出能直接用、哪些要评审，结果由谁负责。", "t": "05:37"}, {"text": "出了问题先做无责复盘，别急着加审批。她的经验是规划、定级、薪酬的流程越加越多，结果并没有变好。", "t": "44:20"}], "caveats": "嘉宾是 Netflix 在任高管，谈招聘的部分带有雇主宣传的成分 [50:50]。YouTube 字幕被拦截，这里用的是 Lenny Newsletter 发布的播客转写，和视频只差 0.6 秒，20 个章节都能对上；片头 90 秒是预告剪辑，时间码都指向正文。她在 [03:44] 说的「先 storming 再 forming」与 Tuckman 模型的顺序相反，应该是想说 norming。评论只抓到了热门的 218 条，总数是 341 条。"}, "tldr": [{"text": "「人人都能做一切」带来的困惑，她看作新技术必经的混乱期。办法不是少用 AI，而是先定好数据来源、上线护栏和责任归属。", "t": "03:44"}, {"text": "职能不会消失。数据科学家判断数据能不能信，PM 判断问题定义得对不对，工程师管规模和质量。", "t": "11:16"}, {"text": "Netflix 在多招系统思考者、少招窄领域的专才。agent 要跨多个系统干活，需要统一的平台和数据。", "t": "13:44"}, {"text": "AI 熟练度是所有岗位的要求，高管也不例外，面试时允许用 AI。", "t": "28:59"}, {"text": "文化的底线是人才密度。能接受冒险和失败，出了问题不靠加流程解决。", "t": "41:51"}, {"text": "娱乐的形态会越来越多。Netflix 对 AI 的立场是让创作者自己选工具，但她认为故事的核心仍然是人。", "t": "1:02:33"}], "framework": [{"title": "角色变模糊只是一个阶段", "start": "00:00", "end": "07:36", "summary": "前 90 秒是预告剪辑，正题从 [03:04] 开始。Lenny 问「人人都能做一切，那我的工作是什么」，她的回答是：这是阶段性的混乱，先把几个前提定下来。", "points": [{"text": "新技术都会先乱一阵，不该因此把 AI 收起来", "t": "03:44"}, {"text": "可以多做原型，但不是每个人都该往生产环境发代码", "t": "04:24"}, {"text": "产品和设计可以先跑，但产品化、规模化和护栏仍要和工程一起定", "t": "04:58"}, {"text": "四个前提：统一数据来源、上线护栏、分清哪些产出要评审、人对结果负责", "t": "05:37"}]}, {"title": "角色在流动，各自的长处还在", "start": "07:36", "end": "13:26", "summary": "PM、设计和数据科学在工程介入之前能做得更多，公司几十年的实验和研究也能很快查到。但她认为各职能的专长没有被取代。", "points": [{"text": "非工程角色能把事情推得更远，但成堆没有方向的原型没有意义", "t": "08:13"}, {"text": "AI 适合整理公司积累的知识，可以当起点，不能全信", "t": "09:31"}, {"text": "财务、内容、广告的同事也能先自己形成假设，再找数据科学家", "t": "10:37"}, {"text": "数据科学管数据能不能信，PM 管问题对不对，工程管怎么做", "t": "11:16"}, {"text": "不认同 AI 实验室那种不分头衔的做法", "t": "12:27"}]}, {"title": "多招系统思考者，少招窄专才", "start": "13:26", "end": "25:10", "summary": "工程要能抽象出公共构件，设计要能做模板和设计系统。平台让团队少造轮子，也是 AI 时代的护栏。只有全球都稀缺的领域，才继续招深度专才。", "points": [{"text": "「我们需要更多系统思考者」", "t": "13:44"}, {"text": "过去各团队自己搭技术栈跑得快，有了 agent 之后需要统一的 paved path", "t": "14:20"}, {"text": "设计团队要做模板，免得上线一堆拼凑出来的界面", "t": "15:30"}, {"text": "平台能帮团队走完 80% 的路，安全、权限和质量标准也写在里面", "t": "17:39"}, {"text": "几千人的公司不能再靠「去问那个知道的人」", "t": "18:50"}, {"text": "回应「设计流程已死」：重要的功能仍要认真做设计", "t": "20:51"}, {"text": "窄而深的专精在变少，视频编码、播放系统这类领域例外", "t": "22:28"}]}, {"title": "系统思维怎么练，AI 熟练度怎么定", "start": "25:10", "end": "31:00", "summary": "个人层面，做事前往外退一步，站在经理和同事的角度想。公司层面，在职级之上统一加一条 AI 熟练度要求，面试允许用 AI。", "points": [{"text": "往外退一步，检查自己对更大问题的假设", "t": "25:32"}, {"text": "不用想到公司战略那么远，也别一直停在质疑里", "t": "26:43"}, {"text": "把活干成能帮经理把他的活干好", "t": "27:19"}, {"text": "所有人统一加 AI 熟练度要求，不逐级细化", "t": "28:59"}, {"text": "编码面试允许用 AI", "t": "30:44"}]}, {"title": "编码之外，AI 用在哪", "start": "31:00", "end": "38:36", "summary": "她举了两类：一是查资料和做分析，二是内容制作，包括预可视化、后期、本地化和宣传物料。顺带回顾了 Netflix Prize。", "points": [{"text": "查资料和做分析，前提是确认用的是正确的数据", "t": "31:17"}, {"text": "内容制作，生成式 AI 带来的变化最大", "t": "31:53"}, {"text": "收购 InterPositive：拍完之后还能重新打光、构图、改对白", "t": "32:32"}, {"text": "个性化推荐一直是 Netflix 最核心的 AI 应用", "t": "35:49"}]}, {"title": "把卓越当成操作系统", "start": "38:36", "end": "50:21", "summary": "她说文化里的这些做法本身不是目的，而是为了把事情做到最好：人才密度、接受冒险、不随意否决别人、不靠流程解决问题、无责复盘、留任测试、给上下文而不是下指令。", "points": [{"text": "给人足够的自主和责任，让决策尽量在一线做", "t": "39:43"}, {"text": "人才密度是前提；不怕失败，但要恢复得快，比如做直播", "t": "41:51"}, {"text": "不在无关大局的决定上否决下属", "t": "43:08"}, {"text": "事情不顺时，不指望流程来修", "t": "44:20"}, {"text": "好的人要的是无责复盘，不是检查清单", "t": "45:59"}, {"text": "留任测试多数时候是一次正面的谈话", "t": "47:06"}, {"text": "目标一致，执行松耦合；给上下文，不下指令", "t": "49:47"}]}, {"title": "新人怎么培养，工程往哪走", "start": "50:21", "end": "59:45", "summary": "她把 Netflix 想要的人和前沿 AI 实验室想要的人区分开；继续招应届生，但要多花力气带人；工程师以后不一定亲手写代码，但必须看得懂系统。", "points": [{"text": "Netflix 要的是喜欢做技术应用、也喜欢娱乐的人，和前沿实验室不是一类", "t": "51:51"}, {"text": "继续招实习生和应届生，年轻人更适应新工具", "t": "53:39"}, {"text": "手艺仍然重要，带新人要投入更多", "t": "54:56"}, {"text": "会写某种语言和懂系统怎么运作是两回事，后者不会过时", "t": "56:42"}, {"text": "agent 写的代码「更快了，但不知道为什么」，这让她不安", "t": "57:59"}]}, {"title": "娱乐会变成什么样，以及快问快答", "start": "59:45", "end": "1:12:08", "summary": "游戏、直播、播客、竖屏短视频都进了 Netflix，找内容会更难。AI 方面，她说让创作者自己决定用不用，但故事里得有人。结尾的快问快答是全片回看最多的一段。", "points": [{"text": "以后的娱乐不会只有一种形态", "t": "1:00:15"}, {"text": "不用 AI 的和想用 AI 的创作者，Netflix 都合作", "t": "1:02:33"}, {"text": "她很难想象没有人在其中的故事", "t": "1:04:09"}, {"text": "推荐的书：《Into Thin Air》《Liar's Poker》", "t": "1:08:07"}, {"text": "父母教她的两句话：每天都有好事发生；最后 5% 的努力最要紧", "t": "1:08:54"}]}], "viewpoints": [{"title": "角色变模糊时，要做的是立规矩，不是收回 AI", "speaker": "Elizabeth Stone", "t": "03:44", "detail": "「我到底负责什么」的困惑，她认为任何大的技术变化都会带来。该做的是把用好 AI 需要的条件搭起来，而不是少用。", "evidence": "列了四个前提：统一的数据来源、上线护栏、分清哪些产出可以直接用、人对结果负责 [05:37]"}, {"title": "人人都能动手，职能也不会消失", "speaker": "Elizabeth Stone", "t": "11:16", "detail": "大家会的东西多了，但数据科学、产品、工程各有别人替代不了的判断。好的工程师、数据科学家和创意人依然难找。", "evidence": "她说大家「会说的语言变多了」，但对好坏的判断还是各自的专长 [12:51]；这是在回应 Lenny 提到的 AI 实验室不分头衔的做法 [11:56]"}, {"title": "AI 时代要多招系统思考者", "speaker": "Elizabeth Stone", "t": "13:44", "detail": "agent 要在多个系统之间工作，需要统一的数据和护栏。以前各团队自己搭技术栈跑得快，现在更需要公共平台，一个问题解决一次。", "evidence": "核心基础设施团队招人时更看重分布式系统和基础设施经验 [14:53]；设计团队转向做模板和设计系统 [15:30]"}, {"title": "窄而深的专精正在贬值", "speaker": "Elizabeth Stone", "t": "22:28", "detail": "和五到十年前比，需要的专才更少，能往多个方向扩展的人更多。只有全球都没几个人懂的领域，才继续保留专精岗位。", "evidence": "例外是视频编码和播放系统 [22:28]；她举的反面是「我是支付专家」这类不愿往外扩的领域专长 [24:23]"}, {"title": "AI 熟练度统一要求，不按职级细分", "speaker": "Elizabeth Stone", "t": "28:59", "detail": "技术每个季度都在变，按职级写细的标准很快就会过时。所以给所有人（包括不写代码的高管）同一条要求，看判断和尝试的意愿，而不是为了用而用。", "evidence": "面试会聊候选人怎么看 AI，编码面试允许用 AI 工具 [30:44]"}, {"title": "出了问题别靠流程修", "speaker": "Elizabeth Stone", "t": "44:20", "detail": "事情复杂时，人的第一反应是加约束。她发现流程加多了只会更费时间，结果并没有变好；更有效的是无责复盘和每个人自己的责任心。", "evidence": "规划、反馈、定级、薪酬流程越加越多，没换来更好的结果 [44:20]"}, {"title": "看得懂系统比会写代码更长久", "speaker": "Elizabeth Stone", "t": "56:42", "detail": "agent 可以写所有代码，但人得判断产品好不好、坏了怎么修，所以对系统怎么运作的理解不会过时。", "evidence": "她承认看 agent 写的代码会不安：「性能更好了，但不知道为什么，坏了也不知道怎么修」[57:59]"}, {"title": "故事的核心还是人", "speaker": "Elizabeth Stone", "t": "1:04:09", "detail": "AI 会在制作中发挥很大作用，但讲故事靠的是人性和共鸣。Netflix 的做法是让创作者自己选，不规定怎么用。", "evidence": "收购 InterPositive；拒绝 AI 和拥抱 AI 的创作者都合作 [1:02:33]"}], "quotes": [{"zh": "有了 AI 之后，我们需要更多系统思考者。", "en": "We need more systems thinkers in a world with AI.", "speaker": "Elizabeth Stone", "t": "13:44", "why": "这期的标题就来自这句话。它也是回看第二多的一段，评论区点赞最多的那条评论讨论的就是它。"}, {"zh": "让 Netflix 走到今天的东西，带不了它走到下一步。", "en": "what got Netflix here doesn't get Netflix there", "speaker": "Elizabeth Stone", "t": "14:53", "why": "借用了 Marshall Goldsmith 的书名，用来解释为什么不能再让各团队各搭各的。"}, {"zh": "每解决一个问题，都往外退一步：我对更大的问题做了哪些假设？", "en": "Each problem you're trying to solve, step out one click to the like, what am I assuming is true about the broader space in solving this problem?", "speaker": "Elizabeth Stone", "t": "25:32", "why": "整期最容易照着做的一句。"}, {"zh": "好的工程依然难找，好的数据科学依然难找，好的创意依然难找。", "en": "I still find great engineering to be scarce, great data science to be scarce, great creativity to be scarce.", "speaker": "Elizabeth Stone", "t": "12:51", "why": "她对「人人都是 builder，还要不要分职能」的回答。"}, {"zh": "非常窄、非常深的专精，我觉得好日子不多了。", "en": "The days of very narrow, deep specialization feel more limited to me.", "speaker": "Elizabeth Stone", "t": "22:28", "why": "对做职业规划的人冲击最大的一句，和她后面说的「手艺依然重要」放在一起看，有点矛盾。"}, {"zh": "要反复强调：结果仍然由人负责。", "en": "the importance of reiterating that humans are still responsible for what happens", "speaker": "Elizabeth Stone", "t": "05:37", "why": "代码是 agent 写的也一样。"}, {"zh": "几千人的公司，不能再靠口口相传，或者「我去找那个唯一知道的人」。", "en": "An organization that has thousands of people can no longer rely on tribal knowledge or I'm going to find the one person who knows this.", "speaker": "Elizabeth Stone", "t": "18:50", "why": "她解释为什么要把数据来源和标准写进平台。"}, {"zh": "我们不追求不出错，追求的是出错后恢复得快。", "en": "We don't try to avoid failures. We try to recover quickly when we have them.", "speaker": "Elizabeth Stone", "t": "41:51"}, {"zh": "我知道它性能更好了，但完全不知道为什么；要是它坏了，我也完全不知道怎么修。", "en": "I know I'm getting better performance from this, but I have no idea why. And if this thing breaks, I'm going to have no idea how to fix it.", "speaker": "Elizabeth Stone", "t": "57:59", "why": "一位技术一把手说自己看不懂 agent 写的代码，不太常见。"}, {"zh": "最后 5% 的努力，往往最要紧。", "en": "the last 5% of effort usually makes all the difference", "speaker": "Elizabeth Stone", "t": "1:08:54", "why": "父母教她的话，出现在全片回看最多的快问快答里。"}], "conflicts": [{"topic": "设计流程还有没有必要", "type": "嘉宾 vs 其他权威", "a": {"who": "Jenny Wen（Claude Code 设计负责人，Lenny 转述）", "claim": "设计流程已经死了，没时间走流程，设计师主要是把方向", "t": "20:21"}, "b": {"who": "Elizabeth Stone", "claim": "心情复杂。可以让更多人借平台做出不错的设计，但最重要的功能仍然需要认真设计，否则会失去「把复杂藏起来」的能力", "t": "20:51"}, "analysis": "两人说的是不同的产品。AI 原生工具按周迭代，功能边界一直在变，流程确实跟不上；Netflix 是上亿人用的消费产品，体验一致本身就是竞争力。比较现实的做法是：日常功能用模板自助，核心体验保留完整的设计流程。"}, {"topic": "人人都能动手，职能还要不要分", "type": "嘉宾 vs 行业共识", "a": {"who": "Lenny（转述 AI 实验室的做法）", "claim": "大家都叫 member of technical staff，不分头衔，也不分到哪个职能里", "t": "11:56"}, "b": {"who": "Elizabeth Stone", "claim": "跨职能会更多，但各学科的手艺不会消失，职能会保留", "t": "12:27"}, "analysis": "两边没有看上去那么对立。AI 实验室取消的是头衔，Netflix 保留的是各职能的专长。真正的分歧在于要不要用组织结构把专长固定下来。Netflix 的选择是保留职能归属，同时要求人横向扩展。"}, {"topic": "少招专才，那精通从哪来", "type": "隐含张力", "a": {"who": "Elizabeth Stone", "claim": "窄而深的专精好日子不多了，专才会越来越少", "t": "22:28"}, "b": {"who": "Elizabeth Stone", "claim": "好的工程和数据科学依然难找，手艺很重要，要多花力气带新人", "t": "54:56"}, "analysis": "她的解释是专才现在学新工具更快 [23:02]，但没回答一个问题：精通要靠多年积累，而 AI 恰恰减少了新人亲手练的机会。评论区一条 76 赞的评论也拿这点批评她：专长是慢慢攒起来的，流失容易补回来难。这是整期最值得追问、Lenny 却没追问的地方。"}, {"topic": "反对加流程，却又要到处设护栏", "type": "隐含张力", "a": {"who": "Elizabeth Stone", "claim": "事情不顺时，别以为流程能解决，要忍住加流程的冲动", "t": "44:20"}, "b": {"who": "Elizabeth Stone", "claim": "要把好的标准和护栏写进 paved path 和日常工作方式", "t": "18:13"}, "analysis": "看起来矛盾，其实她反对的是人工审批，赞成的是写进平台的默认设置。前者拖慢每个决定，后者让人不用多想就走在对的路上。"}, {"topic": "系统思考者要取代的是谁", "type": "嘉宾 vs 评论区", "a": {"who": "Elizabeth Stone", "claim": "系统思维是额外加上的能力，Netflix 还在招应届生，年轻人很重要", "t": "53:39"}, "b": {"who": "点赞最多的评论（725 赞）", "claim": "她的意思是：只会听指令做事的人，AI 已经能替代了", "t": "13:44"}, "analysis": "她措辞很小心，但没有否认执行类岗位在减少。评论区的担心（另一条 49 赞：「招系统架构师，是为了让 AI 取代所有人」）说中了她没明说的那一半：岗位在往上移。对个人来说，越早证明自己能定义问题、能做可复用的东西越好。"}, {"topic": "《系统之美》是否在反驳她的人才观", "type": "嘉宾 vs 评论区", "a": {"who": "Elizabeth Stone", "claim": "靠人才密度和留任测试维持水准，窄专才会变少", "t": "41:51"}, "b": {"who": "评论者（76 赞）", "claim": "按 Meadows 的说法，专长是存量，流失了要好多年才能补回来，她的人才观几乎处处和这本书相反", "t": "25:10"}, "analysis": "批评本身有道理：系统论讲的是结构决定行为，而留任测试更看重换人。但这条评论有个事实错误，《Thinking in Systems》是 Lenny 在 [25:10] 提的，她在快问快答里推荐的是《Into Thin Air》和《Liar's Poker》[1:08:07]。"}], "hotspots": [{"title": "快问快答：书、剧、产品和人生格言", "t": "1:07:48", "end": "1:09:15", "source": ["heatmap"], "heat": 1.0, "why": "全片回看最多的一段，比第二高的片段高出七成左右。大多数人回拖是为了记书名。50 到 66 分钟的热度很低，不少人应该是直接跳到了结尾。", "supplement": "书：《Into Thin Air》《Liar's Poker》[1:08:07]；剧：《Remarkably Bright Creatures》[1:08:30]；产品：Eight Sleep [1:08:45]；格言：最后 5% 的努力最要紧 [1:08:54]。《Thinking in Systems》不是她推荐的，是 Lenny 在 [25:10] 提的。", "comments": []}, {"title": "「我们需要更多系统思考者」和 paved path", "t": "13:44", "end": "15:52", "source": ["heatmap", "comments"], "heat": 0.59, "why": "回看第二多（z=1.87），也是标题的出处。有评论直接写了 13:55 和 14:55，点赞最多的评论（725 赞，21 条回复）讨论的也是这一段。", "supplement": "评论区普遍把它理解成执行类岗位要被 AI 替代，她本人没有正面回应（见观点冲突）。有人说亚马逊爱尔兰团队更早用过类似的平台化做法，未核实。", "comments": [{"text_zh": "说白了就是：想现在被录用，你得能和领导一起解决业务问题。只会听指令做事的，我们已经有 AI 了。", "likes": 725}, {"text_zh": "说白了就是招系统架构师，搭一个让 AI 取代所有员工的框架。", "likes": 49}, {"text_zh": "一家公司能容纳的「系统思考者」终究有限。人人都什么都干，就是厨房里厨子太多，不管怎么切，失业都会增加。", "likes": 15}]}, {"title": "专才怎么办，以及「往外退一步」", "t": "24:23", "end": "28:51", "source": ["heatmap", "comments"], "heat": 0.55, "why": "回看第三多（z=1.59）。这一段讲了专才的出路、系统思维的练法和帮经理做事，都是能直接用的内容；有评论引用了 27:18。", "supplement": "做了 35 年卡车运营的人（45 赞）和写了 30 年代码的人（53 赞）都说自己的经验印证了这一点。也有系统学博士（21 赞）认为「系统思维」早有 Ackoff、Deming 的理论，只是换了个流行的说法。", "comments": [{"text_zh": "和我 35 年卡车运营的观察一模一样：行业总把安全、留人、调度、技术、效率当成不同的问题，交给不同的专家，其实它们互相牵连。", "likes": 45}, {"text_zh": "我天生就是系统思考者（神经多样性），还有系统学博士学位。看到「系统思维」变成一种时髦的卖点，有点烦。", "likes": 21}]}, {"title": "AI 熟练度是所有人的要求，面试可以用 AI", "t": "30:08", "end": "32:28", "source": ["heatmap"], "heat": 0.48, "why": "回看有一个小高峰（z=1.14）。这一段有两个具体做法：高管也要有 AI 熟练度，编码面试允许用 AI；还讲了两类和写代码无关的用途。", "supplement": "对研发效能和 HR 来说这段最有用。不一定要改职级文档，可以先在绩效和面试里加几个观察点：愿不愿意尝试，能不能判断什么时候该用，有没有实际做出东西。", "comments": []}, {"title": "PM、设计和数据科学能走多远", "t": "07:45", "end": "09:23", "source": ["heatmap", "comments"], "heat": 0.42, "why": "回看小高峰（z=0.79）。有观众在自己整理的时间目录里标了 8:10「数据科学家」和 9:15「数据洞察」。", "supplement": "她特意说了「成千上万个没有方向的原型不是好事」[08:13]，算是给现在人人 vibe coding 的风气泼了点冷水。", "comments": [{"text_zh": "8:10 数据科学家，9:15 数据洞察（观众整理的时间目录）", "likes": 0}]}, {"title": "人才密度和冒险文化受到质疑", "t": "41:51", "end": "42:50", "source": ["heatmap", "comments"], "heat": 0.33, "why": "回看起伏不大（z=0.21），但评论区对这一段和留任测试的批评很集中，认为最后替高层失误买单的是一线员工。", "supplement": "批评指向的是责任不对等：高层决策错了，代价常常由执行的人承担。她在 [43:41] 讲了「让人自己做决定、从错误中学」，但没提高管自己怎么被问责。", "comments": [{"text_zh": "42:40 到 42:50：人就是这样被开掉的。C 级高管做了再差的运营决定也没事，被开的是执行的人。", "likes": 1}, {"text_zh": "听起来是很糟糕的工作文化。", "likes": 11}]}], "comment_insights": [{"theme": "系统思考者之外的人怎么办", "stance": "质疑", "summary": "点赞最多的评论（725 赞）和好几条高赞评论，都把「多招系统思考者」理解成执行岗位会被替代。回复里有人说「劳动的价值在下降，工资不涨，要求越来越高」（11 赞）。这是评论区最主要的情绪。", "likes": 725, "t": "13:44"}, {"theme": "一线从业者说确实如此", "stance": "认同", "summary": "做卡车运营的（45 赞）、写了 30 年代码转做 AI 的（53 赞）、自称系统思考者的（41 赞），都用自己行业的经历说明：能跨环节看问题的人学得更快，也推得更远。", "likes": 53, "t": "25:32"}, {"theme": "「系统思维」被包装成了卖点", "stance": "质疑", "summary": "系统学博士（21 赞）、「去看看 Ackoff 和 Deming」（5 赞）、「那为什么业务流程反而越来越烂」（29 赞）、「HR 按关键词筛简历，根本筛不出系统思维」（8 赞）。他们的意思是，这是个老概念，公司也没有真的为它调整招人和定薪的方式。", "likes": 29, "t": "17:22"}, {"theme": "拿《系统之美》批评她", "stance": "质疑", "summary": "一条 76 赞的长评认为，Meadows 的书几乎处处和她的人才观相反：专长是慢慢攒的，流失了很难补。但评论者误以为书是她推荐的。回复里还有人说这条评论读起来像 AI 写的。", "likes": 76, "t": "25:10"}, {"theme": "对她的表达褒贬不一", "stance": "两极", "summary": "不喜欢的：「看了 20 分钟看不下去，太官方」（42 赞，13 条回复），「再听一次 velocity 我就受不了了」（11 赞）。喜欢的：「这个人非常敏锐」（20 赞），「Lenny 都有点跟不上她」（11 赞），「最喜欢的一期回来了」（17 赞）。", "likes": 42, "t": "17:39"}, {"theme": "对 Netflix 本身的不满", "stance": "质疑", "summary": "「订了 20 年，现在退了，内容越来越差」（17 赞），「Netflix 发明了一种没人真爱看、只拿来当背景音的电影」（23 赞），「Netflix 没资格像学者一样谈这个话题」（22 赞）。另有人认为留任测试会伤害心理安全感。", "likes": 23, "t": "47:06"}, {"theme": "「Trinity 回来了」", "stance": "玩笑", "summary": "173 赞，评论区第二高。说嘉宾长得像《黑客帝国》里的 Trinity，这一期有不少人是因为她本人点进来的。", "likes": 173, "t": "01:35"}], "resources": [{"name": "《Thinking in Systems》（系统之美），Donella Meadows", "t": "25:10", "note": "Lenny 提到的，不是嘉宾推荐；评论区围绕它有不少讨论"}, {"name": "《Into Thin Air》（进入空气稀薄地带），Jon Krakauer", "t": "1:08:07", "note": "嘉宾推荐"}, {"name": "《Liar's Poker》（说谎者的扑克牌），Michael Lewis", "t": "1:08:07", "note": "嘉宾推荐，她早年在华尔街做过交易员"}, {"name": "《Remarkably Bright Creatures》", "t": "1:08:30", "note": "嘉宾最近喜欢的 Netflix 电影，母亲推荐的"}, {"name": "Eight Sleep", "t": "1:08:45", "note": "嘉宾在用的智能温控床垫"}, {"name": "InterPositive", "t": "32:32", "note": "Ben Affleck 创办的 AI 后期制作公司，已被 Netflix 收购"}, {"name": "Netflix Prize", "t": "35:25", "note": "Netflix 早年悬赏 100 万美元改进推荐算法的比赛"}, {"name": "Jenny Wen 那期「设计流程已死」", "t": "20:21", "note": "Lenny 拿来对照的观点"}, {"name": "Netflix Tech Blog", "t": "1:10:46", "note": "她说想了解她们在做什么，看这里"}], "glossary": [{"term": "Storming / Forming", "zh": "震荡期 / 形成期", "note": "出自 Tuckman 的团队发展模型，顺序是 forming、storming、norming、performing。她在 [03:44] 说「先 storming 再 forming」，应该是指 norming（规范期）"}, {"term": "Paved path", "zh": "铺好的路", "note": "平台团队提供的推荐做法，安全和质量要求默认写在里面"}, {"term": "Source of truth data", "zh": "唯一可信的数据来源"}, {"term": "AI fluency", "zh": "AI 熟练度", "note": "Netflix 对所有职级统一加的一条要求 [28:59]"}, {"term": "Keeper test", "zh": "留任测试", "note": "「如果他今天提离职，我会拼命留他吗？」[49:21]"}, {"term": "Highly aligned, loosely coupled", "zh": "目标一致，执行松耦合", "note": "Netflix 的文化原则"}, {"term": "Context, not control", "zh": "给上下文，不下指令", "note": "Netflix 的文化原则"}, {"term": "Member of technical staff", "zh": "技术员工", "note": "AI 实验室常用的统一头衔"}, {"term": "Pre-visualization", "zh": "预可视化", "note": "开拍前先把画面构想做出来"}, {"term": "Blameless retro", "zh": "无责复盘"}]}, "transcript": [], "signals": {"heatmap": [{"start": 0.0, "end": 43.28, "value": 0.2267}, {"start": 43.28, "end": 86.56, "value": 0.1968}, {"start": 86.56, "end": 129.84, "value": 0.2997}, {"start": 129.84, "end": 173.12, "value": 0.3772}, {"start": 173.12, "end": 216.4, "value": 0.2138}, {"start": 216.4, "end": 259.68, "value": 0.2106}, {"start": 259.68, "end": 302.96, "value": 0.2017}, {"start": 302.96, "end": 346.24, "value": 0.2745}, {"start": 346.24, "end": 389.52, "value": 0.2199}, {"start": 389.52, "end": 432.8, "value": 0.1079}, {"start": 432.8, "end": 476.08, "value": 0.3274}, {"start": 476.08, "end": 519.36, "value": 0.3564}, {"start": 519.36, "end": 562.64, "value": 0.2994}, {"start": 562.64, "end": 605.92, "value": 0.2407}, {"start": 605.92, "end": 649.2, "value": 0.2152}, {"start": 649.2, "end": 692.48, "value": 0.2325}, {"start": 692.48, "end": 735.76, "value": 0.2504}, {"start": 735.76, "end": 779.04, "value": 0.1489}, {"start": 779.04, "end": 822.32, "value": 0.2763}, {"start": 822.32, "end": 865.6, "value": 0.4614}, {"start": 865.6, "end": 908.88, "value": 0.5271}, {"start": 908.88, "end": 952.16, "value": 0.3923}, {"start": 952.16, "end": 995.44, "value": 0.2858}, {"start": 995.44, "end": 1038.72, "value": 0.2349}, {"start": 1038.72, "end": 1082.0, "value": 0.3513}, {"start": 1082.0, "end": 1125.28, "value": 0.2492}, {"start": 1125.28, "end": 1168.56, "value": 0.2173}, {"start": 1168.56, "end": 1211.84, "value": 0.1786}, {"start": 1211.84, "end": 1255.12, "value": 0.2897}, {"start": 1255.12, "end": 1298.4, "value": 0.2631}, {"start": 1298.4, "end": 1341.68, "value": 0.3688}, {"start": 1341.68, "end": 1384.96, "value": 0.3077}, {"start": 1384.96, "end": 1428.24, "value": 0.2122}, {"start": 1428.24, "end": 1471.52, "value": 0.206}, {"start": 1471.52, "end": 1514.8, "value": 0.3081}, {"start": 1514.8, "end": 1558.08, "value": 0.545}, {"start": 1558.08, "end": 1601.36, "value": 0.3934}, {"start": 1601.36, "end": 1644.64, "value": 0.337}, {"start": 1644.64, "end": 1687.92, "value": 0.3056}, {"start": 1687.92, "end": 1731.2, "value": 0.3504}, {"start": 1731.2, "end": 1774.48, "value": 0.2767}, {"start": 1774.48, "end": 1817.76, "value": 0.2815}, {"start": 1817.76, "end": 1861.04, "value": 0.304}, {"start": 1861.04, "end": 1904.32, "value": 0.4377}, {"start": 1904.32, "end": 1947.6, "value": 0.3686}, {"start": 1947.6, "end": 1990.88, "value": 0.2179}, {"start": 1990.88, "end": 2034.16, "value": 0.1072}, {"start": 2034.16, "end": 2077.44, "value": 0.0773}, {"start": 2077.44, "end": 2120.72, "value": 0.204}, {"start": 2120.72, "end": 2164.0, "value": 0.171}, {"start": 2164.0, "end": 2207.28, "value": 0.0521}, {"start": 2207.28, "end": 2250.56, "value": 0.0696}, {"start": 2250.56, "end": 2293.84, "value": 0.0807}, {"start": 2293.84, "end": 2337.12, "value": 0.1621}, {"start": 2337.12, "end": 2380.4, "value": 0.2429}, {"start": 2380.4, "end": 2423.68, "value": 0.2138}, {"start": 2423.68, "end": 2466.96, "value": 0.1838}, {"start": 2466.96, "end": 2510.24, "value": 0.296}, {"start": 2510.24, "end": 2553.52, "value": 0.268}, {"start": 2553.52, "end": 2596.8, "value": 0.2065}, {"start": 2596.8, "end": 2640.08, "value": 0.1752}, {"start": 2640.08, "end": 2683.36, "value": 0.2452}, {"start": 2683.36, "end": 2726.64, "value": 0.2662}, {"start": 2726.64, "end": 2769.92, "value": 0.2056}, {"start": 2769.92, "end": 2813.2, "value": 0.2403}, {"start": 2813.2, "end": 2856.48, "value": 0.2716}, {"start": 2856.48, "end": 2899.76, "value": 0.2107}, {"start": 2899.76, "end": 2943.04, "value": 0.1647}, {"start": 2943.04, "end": 2986.32, "value": 0.2184}, {"start": 2986.32, "end": 3029.6, "value": 0.2087}, {"start": 3029.6, "end": 3072.88, "value": 0.0602}, {"start": 3072.88, "end": 3116.16, "value": 0.1057}, {"start": 3116.16, "end": 3159.44, "value": 0.1041}, {"start": 3159.44, "end": 3202.72, "value": 0.0944}, {"start": 3202.72, "end": 3246.0, "value": 0.0717}, {"start": 3246.0, "end": 3289.28, "value": 0.1062}, {"start": 3289.28, "end": 3332.56, "value": 0.1305}, {"start": 3332.56, "end": 3375.84, "value": 0.1431}, {"start": 3375.84, "end": 3419.12, "value": 0.2669}, {"start": 3419.12, "end": 3462.4, "value": 0.2469}, {"start": 3462.4, "end": 3505.68, "value": 0.1544}, {"start": 3505.68, "end": 3548.96, "value": 0.0843}, {"start": 3548.96, "end": 3592.24, "value": 0.0901}, {"start": 3592.24, "end": 3635.52, "value": 0.0724}, {"start": 3635.52, "end": 3678.8, "value": 0.1016}, {"start": 3678.8, "end": 3722.08, "value": 0.1029}, {"start": 3722.08, "end": 3765.36, "value": 0.0864}, {"start": 3765.36, "end": 3808.64, "value": 0.0503}, {"start": 3808.64, "end": 3851.92, "value": 0.098}, {"start": 3851.92, "end": 3895.2, "value": 0.0781}, {"start": 3895.2, "end": 3938.48, "value": 0.0599}, {"start": 3938.48, "end": 3981.76, "value": 0.097}, {"start": 3981.76, "end": 4025.04, "value": 0.1032}, {"start": 4025.04, "end": 4068.32, "value": 0.1951}, {"start": 4068.32, "end": 4111.6, "value": 0.8275}, {"start": 4111.6, "end": 4154.88, "value": 1.0}, {"start": 4154.88, "end": 4198.16, "value": 0.5012}, {"start": 4198.16, "end": 4241.44, "value": 0.0943}, {"start": 4241.44, "end": 4284.72, "value": 0.0448}, {"start": 4284.72, "end": 4328.0, "value": 0.0}], "comment_anchors": [{"t": 103, "mentions": 3}, {"t": 490, "mentions": 1}, {"t": 555, "mentions": 1}, {"t": 600, "mentions": 1}, {"t": 895, "mentions": 1}, {"t": 1140, "mentions": 2}, {"t": 1200, "mentions": 1}, {"t": 1638, "mentions": 1}, {"t": 2560, "mentions": 1}, {"t": 3030, "mentions": 1}, {"t": 3389, "mentions": 1}, {"t": 3530, "mentions": 1}], "peaks": [{"start": 129.84, "end": 173.12, "value": 0.297}, {"start": 476.08, "end": 562.64, "value": 0.328}, {"start": 822.32, "end": 952.16, "value": 0.46}, {"start": 1255.12, "end": 1384.96, "value": 0.313}, {"start": 1471.52, "end": 1731.2, "value": 0.425}, {"start": 1817.76, "end": 1947.6, "value": 0.37}, {"start": 2510.24, "end": 2553.52, "value": 0.257}, {"start": 4068.32, "end": 4154.88, "value": 0.776}], "comments_analyzed": 218, "timestamp_mentions": 24}, "generated_at": "2026-09-30"}</script>
+<script>
+(function(){
+const D = JSON.parse(document.getElementById('data').textContent);
+const M = D.meta || {}, G = D.digest || {}, S = D.signals || {};
+const VID = M.id;
+const DUR = M.duration || 0;
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- time helpers */
+function sec(v){
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return v;
+  const s = String(v).trim().replace(/^\[|\]$/g,'');
+  if (/^\d+(\.\d+)?s?$/.test(s)) return parseFloat(s);
+  const p = s.split(':').map(Number); if (p.some(isNaN)) return null;
+  return p.length === 3 ? p[0]*3600+p[1]*60+p[2] : p[0]*60+p[1];
+}
+function fmt(t){ t = Math.max(0, Math.round(t)); const h=Math.floor(t/3600), m=Math.floor(t%3600/60), s=t%60;
+  return (h? h+':'+String(m).padStart(2,'0') : String(m).padStart(2,'0'))+':'+String(s).padStart(2,'0'); }
+function link(t){ return VID ? `https://www.youtube.com/watch?v=${VID}&t=${Math.floor(t)}s` : '#'; }
+function ts(v, cls){ const t = sec(v); if (t == null) return ''; return `<a class="ts ${cls||''}" data-t="${t}" href="${link(t)}" target="_blank" rel="noopener">${fmt(t)}</a>`; }
+const cell = v => ts(v) || '<span></span>';
+/* inline [mm:ss] / [h:mm:ss] in any text => timecode link */
+function rich(text){
+  return esc(text).replace(/\[((?:\d{1,2}:)?\d{1,2}:\d{2})(?:\s*[-–~]\s*(?:\d{1,2}:)?\d{1,2}:\d{2})?\]/g, (m, a) => ts(a, 'inline'))
+                  .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+}
+const num = n => n == null ? '—' : n >= 1e8 ? (n/1e8).toFixed(1).replace(/\.0$/,'')+' 亿' : n >= 1e4 ? (n/1e4).toFixed(1).replace(/\.0$/,'')+' 万' : String(n);
+/* if every item has the same speaker, say it once in the section note instead of on every card */
+const soleSpeaker = arr => { const s = [...new Set((arr||[]).map(x=>x.speaker).filter(Boolean))]; return s.length === 1 && (arr||[]).every(x=>x.speaker) ? s[0] : null; };
+function sourceLabel(src){
+  if (!src) return '';
+  let m;
+  if ((m = src.match(/^substack:([^/]+)/))) return `${m[1].replace(/^www\./,'')} 发布的播客转写`;
+  if ((m = src.match(/^yt-dlp:([\w-]+):(manual|auto)/))) return `YouTube ${m[2]==='auto'?'自动':'人工'}字幕（${m[1]}）`;
+  if (src.startsWith('transcript-api')) return 'YouTube 字幕';
+  if (src.startsWith('local:')) return '用户提供的字幕文件';
+  return src;
+}
+
+/* ---------- hero */
+const main = $('#main'); let html = '';
+const d = M.upload_date ? `${M.upload_date.slice(0,4)}-${M.upload_date.slice(4,6)}-${M.upload_date.slice(6,8)}` : '';
+const guests = (G.guests||[]).map(g => `${esc(g.name)}${g.role? '，'+esc(g.role):''}`).join('；');
+const meta = [M.channel && esc(M.channel), d, DUR && fmt(DUR),
+  M.view_count!=null && `${num(M.view_count)}次观看`, M.like_count!=null && `${num(M.like_count)}赞`,
+  M.comment_count!=null && `${num(M.comment_count)} 条评论`].filter(Boolean);
+html += `<header class="hero"><div class="kicker">访谈精读${M.channel? ' · '+esc(M.channel):''}</div>
+  <h1>${esc(G.title_zh || M.title)}</h1>
+  ${G.title_zh && M.title ? `<div class="orig">${esc(M.title)}</div>`:''}
+  <div class="metaline">${meta.map(x=>`<span>${x}</span>`).join('')}</div>
+  ${guests || G.host ? `<div class="people">${guests? '嘉宾：'+guests:''}${guests && G.host? '　':''}${G.host? '主持：'+esc(G.host):''}</div>`:''}
+  ${G.one_liner? `<p class="oneliner">${rich(G.one_liner)}</p>`:''}
+  ${(G.keywords||[]).length? `<div class="kw">${G.keywords.map(esc).join('、')}</div>`:''}
+</header>`;
+
+const secs = [];
+function section(id, title, desc, body){ if (!body) return; secs.push([id,title]);
+  html += `<section id="${id}"><h2>${title}</h2>${desc? `<p class="desc">${desc}</p>`:''}${body}</section>`; }
+const rows = (items, key='text') => `<ul class="clean">${items.map(x=>`<li>${cell(x.t)}<div>${rich(x[key])}</div></li>`).join('')}</ul>`;
+
+/* ---------- conclusion + value */
+if ((G.tldr||[]).length || G.value){
+  let b = '';
+  const V = G.value || {};
+  if (V.score != null || V.why){
+    const sc = Number(V.score||0);
+    b += `<div class="value"><div class="score"><b>${sc? sc.toFixed(1):'—'}</b><span>/ 5</span><small>值得看的程度</small></div><div>
+      ${(V.for_whom||[]).length? `<div class="who"><em>适合：</em>${V.for_whom.map(esc).join('；')}</div>`:''}
+      ${V.why? `<div>${rich(V.why)}</div>`:''}
+    </div></div>`;
+  }
+  if ((G.tldr||[]).length) b += `<h3 class="sub">要点</h3>${rows(G.tldr)}`;
+  if ((V.takeaways||[]).length) b += `<h3 class="sub">可以直接拿去用的</h3>${rows(V.takeaways)}`;
+  if (V.caveats) b += `<div class="caveat"><em>读之前需要知道</em>${rich(V.caveats)}</div>`;
+  section('summary','结论', '', b);
+}
+
+/* ---------- framework */
+if ((G.framework||[]).length){
+  const F = G.framework;
+  const b = `<div class="tl">${F.map(f=>`<div class="node"><h3>${ts(f.start)}<span>${esc(f.title)}</span>${f.end!=null? `<span class="range">至 ${fmt(sec(f.end))}</span>`:''}</h3>
+    ${f.summary? `<p>${rich(f.summary)}</p>`:''}
+    ${(f.points||[]).length? `<ul>${f.points.map(p=>`<li>${cell(p.t)}<span>${rich(p.text)}</span></li>`).join('')}</ul>`:''}</div>`).join('')}</div>`;
+  section('framework','内容结构', `按视频顺序分成 ${F.length} 段。`, b);
+}
+
+/* ---------- viewpoints */
+if ((G.viewpoints||[]).length){
+  const one = soleSpeaker(G.viewpoints);
+  const b = `<div class="vp">${G.viewpoints.map(v=>`<div class="vcard">
+    ${!one && v.speaker? `<div class="speaker">${esc(v.speaker)}</div>`:''}
+    <h3><span>${esc(v.title)}</span>${ts(v.t)}</h3>
+    <p>${rich(v.detail||'')}</p>${v.evidence? `<div class="ev">依据：${rich(v.evidence)}</div>`:''}</div>`).join('')}</div>`;
+  section('viewpoints','主要观点', one? `以下都是 ${esc(one)} 的观点。`:'', b);
+}
+
+/* ---------- quotes */
+if ((G.quotes||[]).length){
+  const one = soleSpeaker(G.quotes);
+  const b = `<div class="quotes">${G.quotes.map(q=>`<blockquote><div class="zh">${esc(q.zh)}</div>${q.en? `<div class="en">${esc(q.en)}</div>`:''}
+    ${q.why? `<div class="why">${rich(q.why)}</div>`:''}<footer>${ts(q.t)}${!one && q.speaker? `<span>${esc(q.speaker)}</span>`:''}</footer></blockquote>`).join('')}</div>`;
+  section('quotes','金句', `${one? esc(one)+' 的原话，':''}英文与字幕逐句核对过。`, b);
+}
+
+/* ---------- conflicts */
+if ((G.conflicts||[]).length){
+  const C = G.conflicts;
+  const inner = C.filter(c=>/隐含|矛盾/.test(c.type||'')).length;
+  const sideHtml = (s) => s ? `<div class="${'side'}"><b>${esc(s.who||'')} ${ts(s.t,'inline')}</b>${rich(s.claim||'')}</div>` : '<div></div>';
+  const b = C.map(c=>`<div class="cf"><h3>${esc(c.topic)}${c.type? `<span class="ctype">${esc(c.type)}</span>`:''}</h3>
+    <div class="vs">${sideHtml(c.a).replace('class="side"','class="side-a"')}<div class="vsx"></div>${sideHtml(c.b).replace('class="side"','class="side-b"')}</div>
+    ${c.analysis? `<div class="an"><em>怎么看</em>${rich(c.analysis)}</div>`:''}</div>`).join('');
+  section('conflicts','观点冲突', `共 ${C.length} 组${inner? `，其中 ${inner} 组是嘉宾自己说法之间的张力`:''}。`, b);
+}
+
+/* ---------- hotspots */
+if ((G.hotspots||[]).length){
+  const srcName = {heatmap:'回看高峰', comments:'评论提到', content:'内容判断'};
+  const b = G.hotspots.map(h=>{
+    const v = Math.round(Math.min(1, Math.max(0, Number(h.heat||0)))*100);
+    const srcs = [].concat(h.source||[]).map(s=>srcName[s]||esc(s)).join(' + ');
+    return `<div class="hs"><div class="meter"><b>${v}</b><div class="bar"><i style="width:${v}%"></i></div><small>热度</small></div>
+      <h3>${ts(h.t)}<span>${esc(h.title)}</span>${h.end? `<span class="range">至 ${fmt(sec(h.end))}</span>`:''}${srcs? `<span class="src">${srcs}</span>`:''}</h3>
+      <p>${rich(h.why||'')}</p>
+      <div>${h.supplement? `<div class="sup"><em>补充</em>${rich(h.supplement)}</div>`:''}
+      ${(h.comments||[]).length? `<div class="cmts">${h.comments.map(c=>`<div class="cmt">${esc(c.text_zh||c.text)}<em>${c.likes? num(c.likes)+' 赞':''}</em></div>`).join('')}</div>`:''}</div></div>`;
+  }).join('');
+  const basis = [ (S.heatmap||[]).length && '重复观看曲线', S.timestamp_mentions && `评论里的 ${S.timestamp_mentions} 处时间戳` ].filter(Boolean).join('和');
+  section('hotspots','讨论热点', basis? `根据${basis}找出观众最在意的片段。热度以全片最高点为 100。`:'', b);
+}
+
+/* ---------- comment insights */
+if ((G.comment_insights||[]).length){
+  const b = `<div class="ci">${G.comment_insights.map(c=>`<div><h3><span>${esc(c.theme)}</span>${c.stance? `<span class="stance">${esc(c.stance)}</span>`:''}</h3>
+    <p>${rich(c.summary||'')}</p><div class="meta">${ts(c.t)}${c.likes? `<span>代表评论 ${num(c.likes)} 赞</span>`:''}</div></div>`).join('')}</div>`;
+  section('comments','评论区', S.comments_analyzed? `从 ${S.comments_analyzed} 条热门评论里归纳${M.comment_count? `（总共 ${num(M.comment_count)} 条）`:''}。`:'', b);
+}
+
+/* ---------- resources */
+if ((G.resources||[]).length){
+  const b = `<ul class="clean res">${G.resources.map(r=>`<li>${cell(r.t)}<div><b>${esc(r.name)}</b>${r.note? `<span class="note">，${rich(r.note)}</span>`:''}</div></li>`).join('')}</ul>`;
+  section('resources','提到的书和资源', '', b);
+}
+if ((G.glossary||[]).length){
+  const b = `<ul class="clean res">${G.glossary.map(g=>`<li><span class="tip" style="padding-top:3px">术语</span><div><b>${esc(g.term)}</b>：${esc(g.zh||'')}${g.note? `<span class="note">。${rich(g.note)}</span>`:''}</div></li>`).join('')}</ul>`;
+  section('glossary','术语与更正', '', b);
+}
+
+/* ---------- transcript */
+const TR = D.transcript || [];
+if (TR.length){
+  const hasEn = TR.some(r=>r.en);
+  const b = `<div class="tr-tools"><input id="q" placeholder="搜索译稿或英文原文">${hasEn? '<button id="bi">显示英文</button>':''}<button id="follow" class="on">跟随播放</button></div>
+    <div class="tr" id="tr">${TR.map((r,i)=>`<div class="row" data-i="${i}" data-t="${sec(r.t)}">${cell(r.t)}<div>${r.speaker? `<span class="spk">${esc(r.speaker)}</span>`:''}<span class="zh">${esc(r.zh||r.en||'')}</span>${r.en&&r.zh? `<div class="en">${esc(r.en)}</div>`:''}</div></div>`).join('')}</div>`;
+  section('transcript','全文译稿', `${TR.length} 段，播放时会自动滚到当前位置。`, b);
+}
+
+const src = sourceLabel(M.subtitle_source);
+const snap = M.snapshot_date || D.generated_at;
+html += `<footer class="foot"><a href="${esc(M.url||link(0))}" target="_blank" rel="noopener">原视频</a>${src? '　字幕：'+esc(src):''}${snap? '　数据截至 '+esc(snap):''}　由 youtube-interview-digest 生成</footer>`;
+main.innerHTML = html;
+
+/* ---------- toc & chapters */
+$('#toc').insertAdjacentHTML('beforeend', secs.map(([id,t])=>`<a href="#${id}">${t}</a>`).join(''));
+if ((M.chapters||[]).length){ const c=$('#chapters'); c.style.display='';
+  c.insertAdjacentHTML('beforeend', M.chapters.map(x=>`<div class="chap">${ts(x.start)}<span>${esc(x.title)}</span></div>`).join('')); }
+
+/* ---------- heat svg */
+(function(){
+  const H = S.heatmap || [], W = 400, HH = 84, total = DUR || (H.length? H[H.length-1].end : 0);
+  if (!total){ $('#heatPanel').style.display='none'; return; }
+  const x = t => (t/total)*W;
+  let svg = `<svg viewBox="0 0 ${W} ${HH}" preserveAspectRatio="none" id="heat">`;
+  if (H.length){
+    const pts = H.map(h=>`${x((h.start+h.end)/2).toFixed(1)},${(HH-16 - h.value*(HH-24)).toFixed(1)}`);
+    svg += `<polygon points="0,${HH-16} ${pts.join(' ')} ${W},${HH-16}" fill="#e9e6e1"/><polyline points="${pts.join(' ')}" fill="none" stroke="#9c968f" stroke-width="1"/>`;
+  } else {
+    svg += `<text x="${W/2}" y="${HH/2}" text-anchor="middle" font-size="11" fill="#8c8782">这个视频没有重复观看数据</text>`;
+  }
+  svg += `<line x1="0" x2="${W}" y1="${HH-16}" y2="${HH-16}" stroke="#d8d4ce" stroke-width="1"/>`;
+  (S.comment_anchors||[]).forEach(a=>{ const r = Math.min(3.5, 1.6+Math.log2(1+a.mentions)*0.8);
+    svg += `<circle cx="${x(a.t).toFixed(1)}" cy="${HH-9}" r="${r.toFixed(1)}" fill="#1c1b1a"><title>${fmt(a.t)}，${a.mentions} 条评论提到</title></circle>`; });
+  (G.hotspots||[]).forEach((h,i)=>{ const t=sec(h.t); if(t==null) return;
+    svg += `<line x1="${x(t)}" x2="${x(t)}" y1="10" y2="${HH-16}" stroke="#b3261e" stroke-width="1"/><text x="${Math.min(W-8,x(t)+3)}" y="9" font-size="9" fill="#b3261e" font-family="ui-monospace,Menlo,monospace">${i+1}</text>`; });
+  svg += `<line id="cursor" x1="0" x2="0" y1="0" y2="${HH-16}" stroke="#1c1b1a" stroke-width="1" opacity="0"/>`;
+  svg += `<text x="0" y="${HH}" font-size="9" fill="#8c8782" font-family="ui-monospace,Menlo,monospace">00:00</text><text x="${W}" y="${HH}" font-size="9" fill="#8c8782" text-anchor="end" font-family="ui-monospace,Menlo,monospace">${fmt(total)}</text></svg>`;
+  $('#heatSvg').innerHTML = svg;
+  $('#heat').addEventListener('click', e=>{ const r=e.currentTarget.getBoundingClientRect(); jump(((e.clientX-r.left)/r.width)*total); });
+  window.__heatCursor = t => { const c=$('#cursor'); if(c){ c.setAttribute('x1',x(t)); c.setAttribute('x2',x(t)); c.setAttribute('opacity','.7'); } };
+})();
+
+/* ---------- player */
+let player = null, ready = false, broken = false, lastSeek = 0;
+$('#openyt').href = link(0);
+if (M.thumbnail) $('#fallback').style.backgroundImage = `url("${M.thumbnail}")`;
+function showFallback(e){
+  broken = true; window.__ytErr = e && e.data != null ? e.data : (e||'timeout');
+  const m=$('#fbmsg'), tip=$('#fbtip');
+  if (m && e && e.data!=null) m.textContent = ({101:'作者关闭了内嵌播放',150:'视频无法在页面内播放',153:'本地打开的文件无法内嵌播放'}[e.data]||'视频无法在页面内播放')+`（错误 ${e.data}）`;
+  if (tip && e && (e.data===150||e.data===101)) tip.textContent = '可能是作者关闭了内嵌，也可能是当前网络受 YouTube 限制。点时间码会在新标签页打开 YouTube，并跳到对应位置。';
+  if (tip && e && e.data===153) tip.textContent = '用本地 http 服务打开这个页面即可内嵌播放。现在点时间码会在新标签页打开 YouTube。';
+  const o=$('#openyt'); o.href = link(lastSeek); o.textContent = lastSeek ? `在 YouTube 从 ${fmt(lastSeek)} 开始看` : '在 YouTube 打开';
+  $('#fallback').style.display = 'flex'; const y=$('#yt'); if (y) y.style.visibility='hidden';
+}
+function jump(t){
+  lastSeek = t;
+  document.querySelectorAll('a.ts.playing').forEach(a=>a.classList.remove('playing'));
+  if (ready && !broken && player && player.seekTo){
+    player.seekTo(t, true); player.playVideo && player.playVideo();
+    if (window.innerWidth <= 1020) $('.player').scrollIntoView({behavior:'smooth', block:'start'});
+    return true;
+  }
+  window.open(link(t), '_blank', 'noopener'); return false;
+}
+document.addEventListener('click', e=>{
+  const a = e.target.closest('a.ts'); if (!a) return;
+  e.preventDefault(); if (jump(parseFloat(a.dataset.t))) a.classList.add('playing');
+});
+if (!VID){ showFallback(); }
+else {
+  window.onYouTubeIframeAPIReady = function(){
+    player = new YT.Player('yt', { videoId: VID, playerVars: { rel: 0, modestbranding: 1, playsinline: 1, origin: location.protocol.startsWith('http')? location.origin: undefined },
+      events: { onReady: ()=>{ ready = true; }, onError: showFallback } });
+  };
+  const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; s.onerror = showFallback; document.head.appendChild(s);
+  setTimeout(()=>{ if (!ready) showFallback(); }, 12000);
+}
+
+/* ---------- follow playback in transcript */
+const trRows = [...document.querySelectorAll('#tr .row')];
+let follow = true;
+setInterval(()=>{
+  if (!ready || broken || !player.getCurrentTime) return;
+  const t = player.getCurrentTime(); $('#nowTs').textContent = fmt(t); window.__heatCursor && window.__heatCursor(t);
+  if (!trRows.length || !follow) return;
+  let k = 0; for (let i=0;i<trRows.length;i++){ if (parseFloat(trRows[i].dataset.t) <= t) k = i; else break; }
+  const cur = document.querySelector('#tr .row.active');
+  if (cur !== trRows[k]){ cur && cur.classList.remove('active'); trRows[k].classList.add('active');
+    const box = $('#tr'); box.scrollTo({ top: trRows[k].offsetTop - box.offsetTop - 120, behavior: 'smooth' }); }
+}, 800);
+const q = $('#q'); if (q) q.addEventListener('input', ()=>{
+  const v = q.value.trim().toLowerCase();
+  trRows.forEach(r=>{ const zh=r.querySelector('.zh'), en=r.querySelector('.en');
+    if (!zh.dataset.o) zh.dataset.o = zh.textContent; if (en && !en.dataset.o) en.dataset.o = en.textContent;
+    const hit = !v || zh.dataset.o.toLowerCase().includes(v) || (en && en.dataset.o.toLowerCase().includes(v));
+    r.classList.toggle('hide', !hit);
+    const hl = s => v ? esc(s).replace(new RegExp(v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark>${m}</mark>`) : esc(s);
+    zh.innerHTML = hl(zh.dataset.o); if (en) en.innerHTML = hl(en.dataset.o); });
+});
+const bi = $('#bi'); if (bi) bi.addEventListener('click', ()=>{ const on = $('#tr').classList.toggle('bi'); bi.classList.toggle('on', on); bi.textContent = on? '隐藏英文':'显示英文'; });
+const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !follow; fo.classList.toggle('on', follow); });
+})();
+</script>
+</body>
+</html>

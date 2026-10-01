@@ -1,0 +1,12 @@
+# work directories produced by the skill (contain raw transcripts & comments)
+yt_*/
+work/
+# credentials — never commit
+cookies*.txt
+*.cookies
+# build / python
+dist/
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
