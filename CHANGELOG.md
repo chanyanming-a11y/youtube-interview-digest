@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.2.2 — 2026-10-02
+
+文档完善（无代码 / 功能变动），把 v1.2.1 的新能力写进 README。
+
+- README（中 / 英）新增「报告页的交互」/「The report page」小节：无干扰常驻护盾、全文朗读三音源（微软 Edge 晓晓 Neural / 豆包 / 浏览器原生）+ 双击正文起读 + 时间戳「分 / 秒」读法、页内播放自动化、离线单文件分享
+- 抓取链路表新增「自动浏览器导出『显示文字记录』」层（共 6 层），并补充「出口 IP 是云 IP（agent / 沙箱）时：本机一键抓取」小节（`local_fetch.sh`）
+- 目录结构补全 `fetch_transcript_browser.py` / `serve_report.py` / `tts_config.example.json` / `local_fetch.sh`
+- 使用段说明渲染会自动拉起本地预览服务、直接双击 `report.html` 的降级行为
+
 ## v1.2.1 — 2026-10-02
 
 服务端 TTS 音源、自动浏览器导出字幕、本机一键抓取（无功能/数据回归，skill 子目录整体更新）。
