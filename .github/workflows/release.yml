@@ -1,11 +1,18 @@
 name: Release
 
-# Auto-publish a GitHub Release whenever a version tag (v*) is pushed.
-# This removes the manual UI step: just push a tag and CI creates the Release
-# from the matching CHANGELOG.md section and marks it as Latest.
+# Publish a GitHub Release from the matching CHANGELOG.md section.
+#   * push a v* tag            -> creates (or updates) that Release and marks it Latest
+#   * workflow_dispatch + tag  -> re-generates the notes of an EXISTING tag, which is
+#                                 how the blank-bodied v1.1.3–v1.2.2 Releases get
+#                                 repaired without re-tagging anything
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)generate notes for, e.g. v1.2.2"
+        required: true
 
 permissions:
   contents: write
@@ -15,33 +22,54 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # A tag push builds from the tag itself. A manual backfill reads main,
+          # whose CHANGELOG.md still holds every released section.
+          ref: ${{ inputs.tag && 'main' || github.ref_name }}
 
       - name: Extract release notes from CHANGELOG.md
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           python3 - <<'PY'
-          import re
-          tag = "${{ github.ref_name }}"            # e.g. v1.1.3
+          import os, re
+          tag = os.environ["TAG"]                      # e.g. v1.1.3
           ver = tag[1:] if tag.startswith("v") else tag
           text = open("CHANGELOG.md", encoding="utf-8").read()
           # NOTE: keep [^\n]* (not .*) for the heading line — with re.S, `.` also
           # matches newlines, so a greedy `.*\n` swallows the whole file and the
           # capture group ends up empty (that produced blank Release notes v1.1.3+).
+          # Sections must stay in strict descending order, otherwise the next `## `
+          # heading bounds the wrong section.
           pat = re.compile(
               r"^##\s+v?" + re.escape(ver) + r"\b[^\n]*\n(.*?)(?=^##\s|\Z)",
               re.M | re.S,
           )
           m = pat.search(text)
-          body = m.group(1).strip() if m else f"See CHANGELOG.md for {tag}."
+          if not m:
+              raise SystemExit(f"no CHANGELOG.md section found for {tag}")
+          body = m.group(1).strip()
+          if not body:
+              raise SystemExit(f"CHANGELOG.md section for {tag} is empty")
           with open("release_notes.md", "w", encoding="utf-8") as f:
               f.write(body + "\n")
           print(f"Extracted release notes for {tag} ({len(body)} chars)")
           PY
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+          EVENT: ${{ github.event_name }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            --title "${{ github.ref_name }}" \
-            --notes-file release_notes.md \
-            --latest
+          # `gh release create` fails when the tag already has a release, so a
+          # re-pushed / force-pushed tag would turn the run red. Edit instead.
+          # Only a real tag push may claim the "Latest" badge — a manual backfill
+          # of an old tag must not steal it.
+          latest=""
+          if [ "$EVENT" = "push" ]; then latest="--latest"; fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TAG" --notes-file release_notes.md $latest
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file release_notes.md $latest
+          fi
