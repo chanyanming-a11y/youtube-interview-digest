@@ -18,13 +18,15 @@ Transcript sources tried in order:
        (word-timed, speaker-diarised; used by Lenny's Podcast and many other podcasts)
 If all fail the caller reports TRANSCRIPT_MISSING.
 """
+import ipaddress
 import json
 import re
+import socket
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
-import ipaddress
 from datetime import datetime
 
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -66,6 +68,7 @@ def _host_safe(host):
 
 
 def _url_safe(url):
+    """Literal-name check: scheme + hostname only. Deterministic, no DNS."""
     try:
         p = urllib.parse.urlparse(url)
     except Exception:
@@ -75,15 +78,73 @@ def _url_safe(url):
     return _host_safe(p.hostname or "")
 
 
+def _ip_public(ip):
+    """True only for a globally routable address (no loopback/private/metadata)."""
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+        ip = ip.ipv4_mapped          # ::ffff:127.0.0.1 must not slip through
+    return not (ip.is_private or ip.is_loopback or ip.is_link_local
+                or ip.is_reserved or ip.is_multicast or ip.is_unspecified)
+
+
+def _resolve_safe(host):
+    """Resolve `host` and reject if ANY answer is non-public.
+
+    `_host_safe` only inspects the literal name, so an attacker-controlled
+    domain could still resolve to 127.0.0.1 or the cloud metadata address.
+    """
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except OSError:
+        return False
+    addrs = {info[4][0] for info in infos}
+    if not addrs:
+        return False
+    for addr in addrs:
+        try:
+            ip = ipaddress.ip_address(addr.split("%")[0])   # strip IPv6 zone id
+        except ValueError:
+            return False
+        if not _ip_public(ip):
+            return False
+    return True
+
+
+def _url_fetchable(url):
+    """Full pre-flight for an outbound fetch: literal check + DNS check."""
+    if not _url_safe(url):
+        return False
+    host = urllib.parse.urlparse(url).hostname or ""
+    return _resolve_safe(host)
+
+
+class _SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Re-validate every redirect target.
+
+    Without this a URL that passed the pre-flight could still bounce to an
+    internal address (urllib follows redirects transparently).
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not _url_fetchable(newurl):
+            raise urllib.error.HTTPError(newurl, code, "blocked redirect", headers, fp)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _opener(proxy=None):
+    """urllib opener that re-checks every redirect target (SSRF hardening)."""
+    handlers = [_SafeRedirectHandler()]
+    if proxy:
+        handlers.append(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
+    return urllib.request.build_opener(*handlers)
+
+
 def _http(url, data=None, headers=None, timeout=40, proxy=None):
     h = {"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9", "Cookie": "CONSENT=YES+1; PREF=hl=en&gl=US"}
     if data is not None:
         h["Content-Type"] = "application/json"
     h.update(headers or {})
     req = urllib.request.Request(url, json.dumps(data).encode() if data is not None else None, h)
-    opener = urllib.request.build_opener(urllib.request.ProxyHandler({"http": proxy, "https": proxy})) \
-        if proxy else urllib.request.build_opener()
-    with opener.open(req, timeout=timeout) as r:
+    with _opener(proxy).open(req, timeout=timeout) as r:
         return r.read().decode("utf-8", "ignore")
 
 
@@ -332,7 +393,10 @@ def comments_from_page(page, max_root=300, reply_threads=15, replies_per=5, prox
                 token = _token(it)
         time.sleep(0.3)
     # replies for the busiest threads only (each is one extra request)
-    busiest = sorted(reply_tokens, key=lambda k: -(roots[k]["likes"] + 50 * roots[k]["reply_count_hint"]))[:reply_threads]
+    def _busy(k):
+        return -(roots[k]["likes"] + 50 * roots[k]["reply_count_hint"])
+
+    busiest = sorted(reply_tokens, key=_busy)[:reply_threads]
     for cid in busiest:
         try:
             resp = _next(cfg, reply_tokens[cid], proxy)
@@ -395,7 +459,7 @@ def transcript_from_substack(urls, proxy=None, log=None):
             up = post.get(key) or {}
             tr = up.get("transcription") or {}
             cdn = tr.get("cdn_url")
-            if not cdn or not _url_safe(cdn):
+            if not cdn or not _url_fetchable(cdn):
                 continue
             try:
                 raw = json.loads(_http(cdn, proxy=proxy, timeout=90))

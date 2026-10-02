@@ -34,6 +34,7 @@ import socketserver
 import sys
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 import webbrowser
 
@@ -98,11 +99,39 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Pragma", "no-cache")
         super().end_headers()
 
-    def _deny(self, code=405):
+    def _json(self, code, payload):
+        """The only place that writes a JSON response body.
+
+        Routing every JSON reply through here keeps Content-Length honest — a
+        hand-written length that disagrees with the body makes the browser sit
+        waiting for bytes that never arrive.
+        """
+        body = json.dumps(payload).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(b'{"error":"method not allowed"}')
+        self.wfile.write(body)
+
+    def _deny(self, code=405, msg="method not allowed"):
+        self._json(code, {"error": msg})
+
+    def _origin_allowed(self):
+        """Only serve /tts* to a page on this same loopback server.
+
+        The proxy exists so the 豆包 appid/token never reach the page. Without this
+        check any web page the user happens to have open could POST to
+        http://127.0.0.1:<port>/tts and burn their paid quota (localhost CSRF).
+        Requests with no Origin/Referer (curl, or a top-level navigation) pass.
+        """
+        origin = self.headers.get("Origin") or self.headers.get("Referer")
+        if not origin:
+            return True
+        try:
+            host = urllib.parse.urlsplit(origin).hostname or ""
+        except ValueError:
+            return False
+        return host in ("127.0.0.1", "localhost", "::1")
 
     def _tts_status(self):
         cfg = getattr(self.server, "tts_cfg", None)
@@ -114,12 +143,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "doubao_en": cfg.get("voice_en") if doubao else None,
             "edge": EDGE_VOICES if edge else None,
         }
-        body = json.dumps({"available": available, "doubao": doubao, "edge": edge, "voices": voices}).encode("utf-8")
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        self._json(200, {"available": available, "doubao": doubao, "edge": edge, "voices": voices})
 
     def _tts_synth(self):
         length = int(self.headers.get("Content-Length", "0") or "0")
@@ -136,10 +160,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             rate = 1.0
         # guard: avoid absurd requests / abuse of the local proxy
         if not text or len(text) > 600:
-            self.send_response(400)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(b'{"error":"bad request text"}')
+            self._json(400, {"error": "bad request text"})
             return
 
         if source == "edge":
@@ -149,11 +170,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         # default: 豆包 (火山引擎) via config
         cfg = getattr(self.server, "tts_cfg", None)
         if not (cfg and cfg.get("appid") and cfg.get("token")):
-            self.send_response(501)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Content-Length", "43")
-            self.end_headers()
-            self.wfile.write(b'{"error":"doubao tts not configured"}')
+            self._json(501, {"error": "doubao tts not configured"})
             return
 
         voice = cfg.get("voice_en") if str(lang).lower().startswith("en") else cfg.get("voice_zh")
@@ -216,7 +233,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "audio/mpeg")
         self.send_header("Content-Length", str(len(audio)))
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(audio)
 
@@ -238,24 +254,32 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "audio/mpeg")
         self.send_header("Content-Length", str(len(audio)))
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(audio)
 
     def do_GET(self):
-        if self.path == "/tts/status":
-            self._tts_status()
-            return
-        if self.path == "/tts":
+        if self.path.startswith("/tts"):
+            if not self._origin_allowed():
+                self._deny(403, "cross-origin request blocked")
+                return
+            if self.path == "/tts/status":
+                self._tts_status()
+                return
             self._deny(405)
             return
         super().do_GET()
 
     def do_POST(self):
         if self.path == "/tts":
+            if not self._origin_allowed():
+                self._deny(403, "cross-origin request blocked")
+                return
             self._tts_synth()
             return
         if self.path == "/tts/status":
+            if not self._origin_allowed():
+                self._deny(403, "cross-origin request blocked")
+                return
             self._tts_status()
             return
         self._deny(405)
@@ -264,8 +288,22 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass  # keep the server quiet
 
 
+class _Server(socketserver.ThreadingTCPServer):
+    """Localhost-only server that can be restarted immediately.
+
+    SO_REUSEADDR has to be a class attribute (or set before __init__ binds):
+    assigning it on an already-constructed instance is a no-op, which made a
+    quick restart collide with the previous socket in TIME_WAIT and silently
+    hop to the next free port.
+    """
+
+    allow_reuse_address = True
+    daemon_threads = True
+
+
 def main():
-    ap = argparse.ArgumentParser(description="Serve a report over localhost for inline playback + optional 豆包 TTS proxy.")
+    ap = argparse.ArgumentParser(
+        description="Serve a report over localhost for inline playback + optional 豆包 TTS proxy.")
     ap.add_argument("--work", required=True, help="work dir containing report.html")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--open", action="store_true", help="open the URL in the default browser")
@@ -282,14 +320,13 @@ def main():
     httpd = None
     for port in range(args.port, args.port + 20):          # find a free port
         try:
-            httpd = socketserver.ThreadingTCPServer(("127.0.0.1", port), handler)
+            httpd = _Server(("127.0.0.1", port), handler)
             break
         except OSError:
             continue
     if httpd is None:
         sys.exit(f"no free port in {args.port}-{args.port + 19}")
 
-    httpd.allow_reuse_address = True
     httpd.tts_cfg = load_tts_config(args.tts_config)
 
     url = f"http://127.0.0.1:{port}/{REQUIRED}"
