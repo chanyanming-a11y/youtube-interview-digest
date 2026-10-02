@@ -1,0 +1,33 @@
+# Tooling config for the repo. The skill itself only needs
+# skills/youtube-interview-digest/requirements.txt — this file exists so that
+# lint / coverage behave the same locally and in CI.
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = [".git", "docs", "examples"]
+
+[tool.ruff.lint]
+# flake8 core (E/W/F) + import sorting (I) + bugbear (B) + pyupgrade (UP)
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.coverage.run]
+source = ["skills/youtube-interview-digest/scripts"]
+branch = false
+# These three modules are network I/O wrappers: one shells out to yt-dlp, one
+# drives a logged-in browser, one calls a remote model. They need live network
+# and credentials, so CI can never execute them and counting them as 0% would
+# only dilute the number. They are covered by manual smoke runs instead.
+omit = [
+    "skills/youtube-interview-digest/scripts/analyze_signals.py",
+    "skills/youtube-interview-digest/scripts/fetch_transcript_browser.py",
+    "skills/youtube-interview-digest/scripts/fetch_youtube.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+# The suite is deliberately stdlib-only static/unit checks (SSRF guard, HTML
+# escaping, template wiring, transcript parsing). The floor guards against
+# silent erosion of the offline-testable surface; raise it as tests are added.
+fail_under = 45

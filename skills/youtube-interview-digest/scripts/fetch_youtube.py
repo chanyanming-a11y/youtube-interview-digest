@@ -27,9 +27,9 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from transcript_utils import parse_json3, parse_vtt, write_workdir, fmt_ts  # noqa: E402
-import page_fallback  # noqa: E402
 import fetch_transcript_browser as ftb  # noqa: E402
+import page_fallback  # noqa: E402
+from transcript_utils import fmt_ts, parse_json3, parse_vtt, write_workdir  # noqa: E402
 
 try:
     import yt_dlp
@@ -162,8 +162,8 @@ def main():
 
     log = lambda m: print(m, file=sys.stderr)  # noqa: E731
     vid_guess = extract_video_id(args.url)
-    print("→ [yt-dlp] extracting metadata" + ("" if args.no_comments else f" + up to {args.max_comments} comments") + " ...",
-          file=sys.stderr)
+    tail = "" if args.no_comments else f" + up to {args.max_comments} comments"
+    print(f"→ [yt-dlp] extracting metadata{tail} ...", file=sys.stderr)
     mode, info, segs, src, ext_info, bot_msg = "yt-dlp", None, None, None, None, None
     with yt_dlp.YoutubeDL(opts) as ydl:
         try:

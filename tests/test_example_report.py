@@ -4,7 +4,6 @@ The repo ships a rendered example so newcomers can see the output format. This
 test makes sure that demo asset doesn't silently go missing or stop being a real
 rendered report (it should reference the demo video and contain real text).
 """
-import html
 import os
 import unittest
 from html.parser import HTMLParser

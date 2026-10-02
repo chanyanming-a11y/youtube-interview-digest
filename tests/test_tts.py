@@ -5,7 +5,6 @@ If the TTS controls or the SpeechSynthesis wiring are accidentally removed,
 this test fails before the report page ships half-broken.
 """
 import os
-import re
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root
@@ -19,7 +18,7 @@ TEMPLATE = next((p for p in CANDIDATES if os.path.isfile(p)), CANDIDATES[0])
 class TestTtsControls(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        with open(TEMPLATE, "r", encoding="utf-8") as f:
+        with open(TEMPLATE, encoding="utf-8") as f:
             cls.html = f.read()
 
     def test_template_exists(self):

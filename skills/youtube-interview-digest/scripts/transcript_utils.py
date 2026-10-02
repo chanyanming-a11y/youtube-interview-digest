@@ -70,8 +70,8 @@ def _parse_cues(text, sep_re):
     segs = []
     blocks = re.split(r"\n\s*\n", text.replace("\r", ""))
     for b in blocks:
-        lines = [l for l in b.split("\n") if l.strip()]
-        idx = next((i for i, l in enumerate(lines) if "-->" in l), None)
+        lines = [ln for ln in b.split("\n") if ln.strip()]
+        idx = next((i for i, ln in enumerate(lines) if "-->" in ln), None)
         if idx is None:
             continue
         a, _, rest = lines[idx].partition("-->")
@@ -217,9 +217,10 @@ def write_workdir(out, segs, video_id=None, part_minutes=10):
         else:
             mark = ">> " if p["speaker_change"] else ""
         lines.append(f"[{p['ts']}] {mark}{p['text']}")
-    header = f"# Transcript{' — ' + video_id if video_id else ''}\n\n" \
-             f"> {len(paras)} paragraphs · {part} parts · " + \
-             ("'Name:' = speaker (diarised)" if any(p.get("speaker") for p in paras) else "'>>' = speaker change") + "\n"
+    diarised = any(p.get("speaker") for p in paras)
+    legend = "'Name:' = speaker (diarised)" if diarised else "'>>' = speaker change"
+    header = (f"# Transcript{' — ' + video_id if video_id else ''}\n\n"
+              f"> {len(paras)} paragraphs · {part} parts · {legend}\n")
     with open(os.path.join(out, "transcript.md"), "w", encoding="utf-8") as f:
         f.write(header + "\n".join(lines) + "\n")
     words = sum(len(p["text"].split()) for p in paras)

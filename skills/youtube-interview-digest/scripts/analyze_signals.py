@@ -173,7 +173,7 @@ def keywords(comments, k=30):
             toks = [t for t in toks if t not in STOP]
             for t in set(toks):
                 uni[t] += w
-            for a, b in set(zip(toks, toks[1:])):
+            for a, b in set(zip(toks, toks[1:], strict=False)):
                 bi[f"{a} {b}"] += w
     return ([{"term": t, "score": round(s, 1)} for t, s in uni.most_common(k)],
             [{"term": t, "score": round(s, 1)} for t, s in bi.most_common(k // 2)])

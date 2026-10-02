@@ -7,6 +7,24 @@ on:
     branches: [main]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      # Pinned so a new ruff release can't turn the badge red overnight.
+      # Rules live in pyproject.toml ([tool.ruff.lint] select = E,F,W,I,B,UP).
+      - name: Install ruff
+        run: python -m pip install --disable-pip-version-check "ruff==0.16.10"
+
+      - name: Lint
+        run: ruff check .
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -20,10 +38,24 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # The [toml] extra is required on Python 3.10, which has no stdlib
+      # tomllib: plain `coverage` cannot read pyproject.toml and aborts with
+      # "Can't read 'pyproject.toml' without TOML support".
+      - name: Install coverage
+        run: python -m pip install --disable-pip-version-check "coverage[toml]"
+
       # Compile-check every script (no third-party deps needed for this).
       - name: Compile scripts
         run: python -m py_compile skills/youtube-interview-digest/scripts/*.py
 
-      # Run the stdlib-only security/escaping tests.
+      # Run the stdlib-only security/escaping/parsing tests under coverage.
       - name: Run tests
-        run: python -m unittest discover -s tests -v
+        run: |
+          python -m coverage run \
+            --source=skills/youtube-interview-digest/scripts \
+            -m unittest discover -s tests -v
+
+      # Denominator and threshold both come from pyproject.toml. This step is
+      # what actually fails the build when coverage drops.
+      - name: Coverage gate
+        run: python -m coverage report

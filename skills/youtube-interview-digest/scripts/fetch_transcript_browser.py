@@ -158,7 +158,8 @@ def _open_video_more_menu(page, log):
         // fallback: any 更多/More button that is not inside a comment thread
         cand = Array.from(meta.querySelectorAll('button')).find(b =>
             !b.closest('ytd-comment-thread-renderer') &&
-            /更多|更多操作|操作菜单|more|show/i.test((b.textContent||'').replace(/\s+/g,'') + (b.getAttribute('aria-label')||'')));
+            /更多|更多操作|操作菜单|more|show/i.test(
+                (b.textContent||'').replace(/\s+/g,'') + (b.getAttribute('aria-label')||'')));
         if (cand) { cand.click(); return true; }
         return false;
     }"""
@@ -174,7 +175,8 @@ def _click_transcript_item(page, log):
         const kws = ['显示文字记录','文字记录','transcript','transcrip','字幕','untertitel',
                      'transcription','show transcript','转写文稿','content to text'];
         const items = Array.from(document.querySelectorAll(
-            'ytd-menu-service-item-renderer, tp-yt-paper-item, ytd-menu-navigation-item-renderer, tp-yt-paper-listbox > *'));
+            'ytd-menu-service-item-renderer, tp-yt-paper-item, ' +
+            'ytd-menu-navigation-item-renderer, tp-yt-paper-listbox > *'));
         const m = items.find(it => kws.some(k => (it.textContent || '').toLowerCase().includes(k.toLowerCase())));
         if (m) { m.click(); return true; }
         return false;

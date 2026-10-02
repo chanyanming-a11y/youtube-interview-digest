@@ -11,3 +11,8 @@ __pycache__/
 *.pyc
 .venv/
 .DS_Store
+# tooling caches
+.coverage
+.coverage.*
+htmlcov/
+.ruff_cache/

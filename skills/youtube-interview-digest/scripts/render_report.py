@@ -247,7 +247,7 @@ def to_markdown(meta, g, transcript, vid, extra=None):
                 L.append(f"\n{R(q['why'])}")
             L.append("")
     if g.get("conflicts"):
-        L.append(f"## 观点冲突\n")
+        L.append("## 观点冲突\n")
         for c in g["conflicts"]:
             L.append(f"### {c.get('topic')}" + (f"（{c['type']}）" if c.get("type") else ""))
             for s in ("a", "b"):
@@ -257,11 +257,15 @@ def to_markdown(meta, g, transcript, vid, extra=None):
                 L.append(f"\n怎么看：{R(c['analysis'])}")
             L.append("")
     if g.get("hotspots"):
-        basis = "和".join(x for x in ["重复观看曲线" if extra.get("has_heatmap") else "",
-                                    f"评论里的 {extra['timestamp_mentions']} 处时间戳" if extra.get("timestamp_mentions") else ""] if x)
+        parts = []
+        if extra.get("has_heatmap"):
+            parts.append("重复观看曲线")
+        if extra.get("timestamp_mentions"):
+            parts.append(f"评论里的 {extra['timestamp_mentions']} 处时间戳")
+        basis = "和".join(parts)
         L.append("## 讨论热点\n" + (f"\n根据{basis}找出观众最在意的片段。热度以全片最高点为 100。\n" if basis else ""))
         names = {"heatmap": "回看高峰", "comments": "评论提到", "content": "内容判断"}
-        for i, h in enumerate(g["hotspots"], 1):
+        for h in g["hotspots"]:
             srcs = h.get("source") if isinstance(h.get("source"), list) else [h.get("source")]
             src = " + ".join(names.get(s, s) for s in srcs if s)
             L.append(f"### {T(h.get('t'))} {h.get('title')}")
@@ -271,7 +275,8 @@ def to_markdown(meta, g, transcript, vid, extra=None):
             if h.get("supplement"):
                 L.append(f"补充：{R(h['supplement'])}\n")
             for c in h.get("comments", []):
-                L.append(f"> {c.get('text_zh') or c.get('text')}" + (f"（{_num_zh(c['likes'])} 赞）" if c.get("likes") else ""))
+                likes = f"（{_num_zh(c['likes'])} 赞）" if c.get("likes") else ""
+                L.append(f"> {c.get('text_zh') or c.get('text')}{likes}")
             L.append("")
     if g.get("comment_insights"):
         n = extra.get("comments_analyzed")
@@ -282,11 +287,15 @@ def to_markdown(meta, g, transcript, vid, extra=None):
         L.append("")
     if g.get("resources"):
         L.append("## 提到的书和资源\n")
-        L += [f"- {T(r.get('t'))} {r.get('name')}" + (f"，{R(r['note'])}" if r.get("note") else "") for r in g["resources"]]
+        for r in g["resources"]:
+            note = f"，{R(r['note'])}" if r.get("note") else ""
+            L.append(f"- {T(r.get('t'))} {r.get('name')}{note}")
         L.append("")
     if g.get("glossary"):
         L.append("## 术语与更正\n")
-        L += [f"- {x.get('term')}：{x.get('zh', '')}" + (f"。{R(x['note'])}" if x.get("note") else "") for x in g["glossary"]]
+        for x in g["glossary"]:
+            note = f"。{R(x['note'])}" if x.get("note") else ""
+            L.append(f"- {x.get('term')}：{x.get('zh', '')}{note}")
         L.append("")
     if transcript and any(r.get("zh") for r in transcript):
         L.append("## 全文译稿\n")
