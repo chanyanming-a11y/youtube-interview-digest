@@ -26,7 +26,9 @@ class TestTtsControls(unittest.TestCase):
         self.assertTrue(os.path.isfile(TEMPLATE), "report_template.html missing")
 
     def test_control_ids_present(self):
-        for cid in ("tts", "ttsStop", "ttsLang", "ttsRate"):
+        # The read-aloud toolbar ids (renamed from tts/ttsStop/ttsLang/ttsRate when the
+        # toolbar was rebuilt; the button now toggles play/stop instead of a separate #ttsStop).
+        for cid in ("readAll", "rdLang", "rdRate", "rdSrc"):
             self.assertIn(f'id="{cid}"', self.html,
                           f"TTS control #{cid} not found in template")
 
@@ -43,7 +45,7 @@ class TestTtsControls(unittest.TestCase):
                       "English (en) voice option missing")
 
     def test_rate_options_present(self):
-        for rate in ("0.85", "1", "1.2", "1.5"):
+        for rate in ("0.85", "0.95", "1.1", "1.25", "1.5"):
             self.assertIn(f'value="{rate}"', self.html,
                           f"TTS rate option {rate}× missing")
 

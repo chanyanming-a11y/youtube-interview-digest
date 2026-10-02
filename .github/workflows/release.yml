@@ -23,8 +23,11 @@ jobs:
           tag = "${{ github.ref_name }}"            # e.g. v1.1.3
           ver = tag[1:] if tag.startswith("v") else tag
           text = open("CHANGELOG.md", encoding="utf-8").read()
+          # NOTE: keep [^\n]* (not .*) for the heading line — with re.S, `.` also
+          # matches newlines, so a greedy `.*\n` swallows the whole file and the
+          # capture group ends up empty (that produced blank Release notes v1.1.3+).
           pat = re.compile(
-              r"^##\s+v?" + re.escape(ver) + r"\b.*\n(.*?)(?=^##\s|\Z)",
+              r"^##\s+v?" + re.escape(ver) + r"\b[^\n]*\n(.*?)(?=^##\s|\Z)",
               re.M | re.S,
           )
           m = pat.search(text)
