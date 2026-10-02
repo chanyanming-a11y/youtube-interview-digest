@@ -15,6 +15,19 @@
 - `SKILL.md`：环境说明改为通用写法（低版本 Python 的升级方式举例改用
   `uv python install` / `brew install python@3.12`，不再提某个平台的运行时）
 
+README 重构为「短入口 + 深读文档」（无功能 / 数据变动）：
+
+- 正文 379 → 228 行、27 KB → 15 KB（英文 252 → 202 行）。删掉长目录、合并重复的
+  「和通用助手有什么不同」，FAQ 由 11 段长答压成 8 条一行式，目录树与次要安装方式折叠
+- 「报告页的交互」（12 行密集散文）下沉到 `docs/report-page.md` / `.en.md`，
+  README 只留 4 个加粗卖点 + 链接
+- 「抓取链路：被 YouTube 拦了怎么办」（约 100 行）下沉到 `docs/captions.md` / `.en.md`，
+  README 只留 6 层降级表 + 退出码 + 云 IP 的两行命令
+- 新增 `tests/test_docs_links.py`：离线校验所有 Markdown 的相对链接与页内锚点
+  （按 GitHub slugger 规则算锚点），测试 81 → 83 项。该测试当场抓出两处既有死链：
+  `PRIVACY.md` → `README.md#合规说明`、`docs/case-study.md` → `README.md#安装`，
+  均指向已不存在的标题，已改为 `#合规与隐私` / `#快速开始`
+
 ## v1.2.3 — 2026-10-02
 
 安全修复与工程质量（无功能 / 数据变动）。

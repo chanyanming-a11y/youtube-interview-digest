@@ -27,4 +27,4 @@
 ## 相关
 
 - 安全漏洞反馈与 SSRF / cookies 注意事项见 [SECURITY.md](SECURITY.md)。
-- 合规与使用条款见 [README](README.md#合规说明)。
+- 合规与使用条款见 [README](README.md#合规与隐私)。
