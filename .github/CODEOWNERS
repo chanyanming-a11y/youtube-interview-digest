@@ -1,0 +1,5 @@
+# Default owner for everything in the repo.
+# If a second maintainer joins, split these per area, e.g.
+#   /skills/youtube-interview-digest/scripts/   @someone
+#   /docs/                                      @someone-else
+* @chanyanming-a11y

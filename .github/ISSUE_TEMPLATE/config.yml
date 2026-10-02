@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🔒 报告安全漏洞 / Report a security vulnerability
+    url: https://github.com/chanyanming-a11y/youtube-interview-digest/security/advisories/new
+    about: 请勿开公开 issue，改用私有安全公告。Please report privately instead of opening a public issue.
+  - name: 📖 先读 FAQ（装不上 / 拿不到字幕 / 没热度曲线）
+    url: https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/README.md#常见问题
+    about: 常见卡点大多已在这些条目里回答；确认不是已知问题再开 issue。
+  - name: 🗺️ 想认领一个任务 / Find something to work on
+    url: https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/ROADMAP.md
+    about: 看路线图里标 ⏳ 的近期项，或找带 good first issue 标签的 issue。
