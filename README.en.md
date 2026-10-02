@@ -73,7 +73,9 @@ Then ask the agent something like "summarize this YouTube interview with timesta
 | 3 | external transcript linked in the description (Substack podcasts) | diarised transcript with word-level timing | no |
 | 4 | **automatic browser export** of "Show transcript" (`fetch_transcript_browser.py`, Playwright driving your local logged-in Chrome) | captions | no (reuses your local session) |
 | 5 | `--cookies-from-browser` / `--cookies` | captions | **yes, only with explicit user consent** |
-| 6 | user-supplied `.srt` / `.vtt` / copied "Show transcript" text | captions | no |
+| 6 | **user-supplied**: full text copied from "Show transcript", or a `.srt` / `.vtt` / `.json3` file | captions | no |
+
+Level 6 is the most common — and least error-prone — fallback. Full steps, supported formats, a copy-paste prompt and common snags are in [Can't get the captions?](#cant-get-the-captions-export-them-manually) below.
 
 **Cloud egress IP (agent / sandbox)?** YouTube blocks the caption API wholesale (`RequestBlocked` / `page needs to be reloaded`), and login cookies don't help — it's an environment limit, not a skill bug. Don't retry; fetch once on **your own machine** (normal IP + logged-in Chrome) with `local_fetch.sh`, then hand the output folder back to the agent. Only the fetch step needs network.
 
@@ -81,9 +83,79 @@ Then ask the agent something like "summarize this YouTube interview with timesta
 ~/.workbuddy/skills/youtube-interview-digest/local_fetch.sh "https://www.youtube.com/watch?v=<ID>"
 ```
 
+### Can't get the captions? Export them manually
+
+YouTube blocks the caption API wholesale for datacenter / proxy IPs, and some videos simply have no captions at all. **This is an environment limit, not a skill bug — don't retry.** The reliable path is to export the transcript once yourself; the agent handles translation, deconstruction and rendering.
+
+#### Option A — YouTube's built-in "Show transcript" (recommended, nothing to install)
+
+1. Open the video in a **desktop browser** (sign in first, so you don't hit the "confirm you're not a bot" gate).
+2. Expand the description ("**...more**") and click **Show transcript** at the very bottom.
+3. **Scroll the transcript panel to the bottom first** so the whole transcript loads — important for long videos.
+4. **Keep timestamps on** (the ⋯ menu at the top-right of the panel toggles them). **Every clickable timestamp in the report depends on them** — with timestamps off, all jumps break.
+5. Click inside the panel, select all (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>A</kbd>), copy (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>C</kbd>).
+6. Paste it straight into the chat together with the video URL.
+
+> The copy comes out as alternating "timestamp line / text line". The parser handles that as-is — **no manual cleanup needed**.
+>
+> Mobile: the YouTube app shows "Show transcript" inside the expanded description, but selecting a long transcript on a phone is painful — use a desktop for long videos.
+
+#### Option B — download a caption file (precise timing, or you want to keep it)
+
+yt-dlp is already a dependency, so one command gets the captions as a file:
+
+```bash
+# captions only, no video
+yt-dlp --skip-download --write-subs --write-auto-subs \
+       --sub-langs "en.*,zh-Hans" \
+       -o "%(id)s.%(ext)s" "https://www.youtube.com/watch?v=<ID>"
+# yields <ID>.en.vtt — .vtt is parsed directly, no ffmpeg conversion needed
+```
+
+For **your own** videos, YouTube Studio gives the authoritative file: Subtitles → pick the video → ⋯ next to the language → Download → `.srt`.
+
+#### Option C — fetch everything on your own machine
+
+When you also want the replay heatmap and comments, see `local_fetch.sh` above: one command on a normal IP with a logged-in Chrome gets captions + heatmap + comments.
+
+#### Supported formats
+
+| What you have | Works? | Note |
+|---|---|---|
+| text copied from "Show transcript" | ✅ | "timestamp line + text line"; duplicates are fine |
+| `.srt` / `.vtt` / `.json3` | ✅ | auto-detected, **no** conversion needed |
+| timestamped `.txt` (`[12:34] text` or `12:34 text`) | ✅ | |
+| plain text with **no timestamps at all** | ❌ | every jump in the report needs a timestamp |
+
+#### What to say to the agent (copy-paste)
+
+> I can't get the captions automatically. Here is the full transcript I exported from YouTube's "Show transcript" (with timestamps).
+> Video: https://www.youtube.com/watch?v=&lt;ID&gt;
+> Please run the youtube-interview-digest pipeline on this transcript (translate → deconstruct → render).
+> If the replay heatmap and comments aren't available this time, still render the report and note it under caveats.
+
+Command-line equivalent (when `yt_<ID>/` already has meta / heatmap / comments):
+
+```bash
+python3 skills/youtube-interview-digest/scripts/transcript_utils.py \
+  --file ./transcript.vtt --out ./yt_<ID> --video-id <ID>
+```
+
+It writes `transcript.md` / `paragraphs.json`, keeps any existing `meta.json` / heatmap / comments, and records `meta.subtitle_source` as `local:<filename>` so the report can state its provenance.
+
+#### Common snags
+
+| Symptom | Cause / fix |
+|---|---|
+| No "Show transcript" in the description | The creator disabled captions, the video is too new, there is no speech, or the language isn't supported. Use Option B, or retry in a few hours |
+| The copied text has no timestamps | "Toggle timestamps" is off in the panel — turn it on and copy again |
+| The agent says it can't parse any timestamps | Same as above, or you pasted plain text from a third-party tool |
+| Caption language doesn't match the video | Switch the caption track at the bottom of the panel and pick the original (usually marked "auto-generated") |
+| Captions work but there's no heatmap / comments | Normal — those are fetched separately. The report still renders; "hotspots" just falls back to content judgement |
+
 ## Notes
 
-- For personal study and research. Respect YouTube's Terms of Service and content copyright. When sharing reports publicly, render with `--no-transcript` (YouTube captions are platform content; redistributing large chunks may breach ToS). This repo's `examples/` and the GitHub Pages demo keep the full transcript **for demonstrating the output format only** — not an endorsement to redistribute the video's captions.
+- For personal study and research. Respect YouTube's Terms of Service and content copyright. When sharing reports publicly, render with `--no-transcript` (YouTube captions are platform content; redistributing large chunks may breach ToS). This repo's `examples/` and the GitHub Pages demo are **rendered with `--no-transcript`**: they keep only the digest, short quotes and translated comment excerpts — **no full transcript** — and the raw `transcript*.json` / `comments.json` are not committed. No commenter usernames appear in the reports.
 - Never commit cookie files. They are excluded by `.gitignore`.
 - Security (vulnerability reporting, SSRF / cookie notes): see [SECURITY.md](SECURITY.md).
 - Privacy & data flow (what leaves your machine, what stays local, cookie handling): see [PRIVACY.md](PRIVACY.md).
