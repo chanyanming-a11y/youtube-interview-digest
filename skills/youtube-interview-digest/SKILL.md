@@ -1,6 +1,6 @@
 ---
 name: youtube-interview-digest
-description: 油管内容总结 / YouTube interview & podcast digest. This skill should be used when the user shares a YouTube link (or a YouTube transcript file) and asks to summarize, translate, 总结, 精读, 拆解, 提炼 a video, interview, podcast or talk. It fetches the timestamped transcript, heatmap ("most replayed") and top comments, translates to Chinese, deconstructs framework / quotes / viewpoint conflicts, enriches with traffic peaks and comment hotspots, then outputs an interactive HTML report (embedded player with a no-distraction shield; every summary item has a clickable timestamp that seeks the video; a full-article read-aloud that supports natural voices — Microsoft Edge 晓晓 Neural / 豆包 / browser native — and double-click-to-start-from-any-paragraph) plus Markdown. Not for: general web articles or blog posts, non-YouTube video platforms, or a one-off plain translation without digest/deconstruction.
+description: 油管内容总结 / YouTube interview & podcast digest. 当用户给出 YouTube 链接（或自己导出的字幕：.srt / .vtt / .json3 / 带时间戳的 txt / 「显示文字记录」复制出的文本），要求 summarize / translate / 总结 / 翻译 / 精读 / 拆解 / 提炼 一期访谈、播客或演讲时使用。产出带时间戳、每个结论都能点击跳回原视频的中文精读报告（框架 / 可被反驳的观点 / 逐字核对的金句 / 观点冲突 / 观众讨论热点），输出交互式 HTML 报告 + Markdown。Not for: 普通网页文章或博客、非 YouTube 的视频平台、只要逐段纯翻译而不要解构的场景。
 ---
 
 # YouTube 访谈精读（youtube-interview-digest）
