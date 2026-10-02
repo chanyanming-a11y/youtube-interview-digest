@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "长访谈高效导读：把 YouTube 访谈/播客变成带时间戳、可点击跳转的中文精读报告",
-    "version": "1.2.2"
+    "version": "1.2.3"
   },
   "plugins": [
     {

@@ -1,5 +1,52 @@
 # Changelog
 
+## v1.2.3 — 2026-10-02
+
+安全修复与工程质量（无功能 / 数据变动）。
+
+安全：
+
+- 本地 TTS 代理（`serve_report.py`）：`/tts` 与 `/tts/status` 增加同源校验——Origin 优先于 Referer，
+  只放行 `127.0.0.1` / `localhost` / `::1`；无 Origin / Referer 的请求（curl、顶层导航）仍放行。
+  同时删除两处 `Access-Control-Allow-Origin: *`。此前用户开着任意网页，就可能被跨域 POST 到
+  `http://127.0.0.1:<port>/tts` 白烧付费额度（localhost CSRF）
+- 外部转写抓取（`page_fallback.py`）：在原有字面量主机名校验之外，补上 DNS 解析校验
+  （`_ip_public` / `_resolve_safe` / `_url_fetchable`）与重定向目标二次校验（`_SafeRedirectHandler`），
+  堵住「域名解析到内网」与「urllib 默认透明跟随重定向」两条绕过路径
+
+修复：
+
+- 本地预览服务：`allow_reuse_address` 原先在实例构造后才赋值，等于没生效。重启服务时端口处于
+  TIME_WAIT 会导致绑定失败并静默跳到相邻端口，用户按原链接打开即连接被拒
+- 本地 TTS 代理：未配置密钥时的 501 响应 `Content-Length` 手写为 43，实际 body 只有 37 字节，
+  浏览器会一直等待不存在的字节。所有 JSON 响应现在统一由一处写入
+- `release.yml`：`gh release create` 遇已有 Release 会失败，改为先探测再决定 create / edit，
+  重建 tag 不再让工作流变红；另加 `workflow_dispatch` 入口，可手动指定历史 tag 重新生成正文
+  （手动触发不加 `--latest`）。"抽不到段落"与"抽到空段落"从静默降级改为直接失败——
+  正文为空正是上次没被发现的原因
+
+工程：
+
+- 引入 `ruff`（规则集 E,F,W,I,B,UP）与覆盖率门禁，CI 拆出独立 `lint` job
+  （ruff 版本钉住，避免上游发版把徽章打红）；覆盖率计量排除三个纯网络脚本
+  （`fetch_youtube.py` / `fetch_transcript_browser.py` / `analyze_signals.py`，
+  需要联网与凭据、CI 跑不到）并说明原因，离线可测面实测 48%，门槛 45
+  （CI 里装的是 `coverage[toml]`——Python 3.10 没有标准库 `tomllib`，裸 `coverage`
+  读不了 `pyproject.toml`，会直接报 "Can't read 'pyproject.toml' without TOML support"）
+- 测试 19 → 81 项：新增 `tests/test_transcript_utils.py`（字幕解析全格式）、
+  `tests/test_render_report.py`（校验与渲染）、`tests/test_security.py` 扩充（起真实
+  `127.0.0.1` 服务端跑端到端断言）
+- `render_report.py` / `transcript_utils.py` 的格式整理已用「同一输入跑 HEAD 版与本版」比对，
+  `report.md` 与 `report.html` SHA256 完全一致
+
+文档：
+
+- README 补演示动图（`docs/images/demo.gif`，18 帧滚动预览）并补全目录结构，中英文同步
+- 新增 `CODE_OF_CONDUCT.md`、`ROADMAP.md`、`.github/CODEOWNERS`、issue 模板配置；
+  `CONTRIBUTING.md` 增加 lint / 覆盖率跑法与 `good first issue` 入门任务
+- `SKILL.md` 的 `description` 改为触发导向（原来 891 字符塞满了实现细节）
+- CHANGELOG 修正 v1.0.0 / v1.1.0 顺序为严格倒序
+
 ## v1.2.2 — 2026-10-02
 
 文档完善（无代码 / 功能变动），把 v1.2.1 的新能力写进 README。
