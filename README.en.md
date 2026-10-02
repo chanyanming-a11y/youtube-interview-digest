@@ -66,8 +66,8 @@ A general assistant gives you *a summary*. This gives you a report you can **ver
 ```bash
 git clone https://github.com/chanyanming-a11y/youtube-interview-digest.git
 cd youtube-interview-digest
-./install.sh                         # → ~/.workbuddy/skills/
-./install.sh ~/.your-agent/skills    # any agent that loads SKILL.md skills
+./install.sh                         # auto-detects your agent's skills dir
+./install.sh ~/.your-agent/skills    # or point it at any agent that loads SKILL.md
 python3 -m pip install -r skills/youtube-interview-digest/requirements.txt   # Python ≥ 3.10
 ```
 
@@ -82,7 +82,7 @@ Then ask the agent something like "summarize this YouTube interview with timesta
 
 **Install via your coding agent (no command line needed)**: paste the following to your agent and it will clone and place the skill in the right skills directory:
 
-> Please clone this skill repo (https://github.com/chanyanming-a11y/youtube-interview-digest) locally and copy its `skills/youtube-interview-digest/` directory into your agent's skills directory (e.g. `~/.workbuddy/skills/` or Claude Code's skills dir). If unsure of the path, ask me which agent and skills dir I use. When done, briefly explain how to trigger it in chat, e.g. "summarize this YouTube interview with timestamps: <url>".
+> Please clone this skill repo (https://github.com/chanyanming-a11y/youtube-interview-digest) locally and copy its `skills/youtube-interview-digest/` directory into your agent's skills directory (e.g. Claude Code's `~/.claude/skills/`). If unsure of the path, ask me which agent and skills dir I use. When done, briefly explain how to trigger it in chat, e.g. "summarize this YouTube interview with timestamps: <url>".
 
 ## Bot-check fallback chain
 
@@ -100,7 +100,9 @@ Level 6 is the most common — and least error-prone — fallback. Full steps, s
 **Cloud egress IP (agent / sandbox)?** YouTube blocks the caption API wholesale (`RequestBlocked` / `page needs to be reloaded`), and login cookies don't help — it's an environment limit, not a skill bug. Don't retry; fetch once on **your own machine** (normal IP + logged-in Chrome) with `local_fetch.sh`, then hand the output folder back to the agent. Only the fetch step needs network.
 
 ```bash
-~/.workbuddy/skills/youtube-interview-digest/local_fetch.sh "https://www.youtube.com/watch?v=<ID>"
+# macOS Terminal (run from the cloned repo)
+./skills/youtube-interview-digest/local_fetch.sh "https://www.youtube.com/watch?v=<ID>"
+# or, if the skill is already installed, run local_fetch.sh inside that skills dir
 ```
 
 ### Can't get the captions? Export them manually

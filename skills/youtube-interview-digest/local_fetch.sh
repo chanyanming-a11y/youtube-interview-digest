@@ -33,9 +33,14 @@ else
   exit 3
 fi
 
-# 优先用 WorkBuddy managed venv（已含 yt-dlp），否则回退到系统 python3
-PY="$HOME/.workbuddy/binaries/python/envs/default/bin/python"
-if [ ! -x "$PY" ]; then PY="python3"; fi
+# 解释器优先级：$PY 环境变量 → 常见的托管 venv（自动探测）→ 系统 python3
+PY="${PY:-}"
+if [ -z "$PY" ]; then
+  for c in "$HOME"/.*/binaries/python/envs/default/bin/python "$HOME"/.*/venv/bin/python "$HOME"/.venv/bin/python; do
+    if [ -x "$c" ]; then PY="$c"; break; fi
+  done
+fi
+if [ -z "$PY" ]; then PY="python3"; fi
 
 # 校验 yt-dlp 是否可用
 if ! "$PY" -c "import yt_dlp" >/dev/null 2>&1; then

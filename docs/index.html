@@ -57,8 +57,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
     <h2>安装</h2>
     <pre><code>git clone https://github.com/chanyanming-a11y/youtube-interview-digest.git
 cd youtube-interview-digest
-./install.sh                     # 默认装到 ~/.workbuddy/skills/
-./install.sh ~/.my-agent/skills  # 或指定其他支持 SKILL.md 的 agent</code></pre>
+./install.sh                     # 自动探测你的 agent skills 目录并安装
+./install.sh ~/.my-agent/skills  # 或显式指定任意支持 SKILL.md 的 agent 目录</code></pre>
     <p class="note">依赖：Python ≥ 3.10，以及 <code>pip install -r skills/youtube-interview-digest/requirements.txt</code>（yt-dlp, youtube-transcript-api）。</p>
   </div>
 

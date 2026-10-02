@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+文档与安装脚本去平台化：不再把某一个具体 agent 的路径写死在仓库里（无功能 / 数据变动）。
+
+- `install.sh`：默认目标目录不再硬编码。改为按「`$1` → `$SKILLS_DIR` → 自动探测
+  `$HOME/.*/skills`（探测到多个时打印全部候选、取排序后的第一个）→ `~/.agent-skills`」
+  的顺序解析，并在安装前打印实际落点。原有的「显式传路径」「`--link`」
+  「重复安装自动备份」行为保持不变
+- `local_fetch.sh`：Python 解释器不再写死某个托管 venv 的绝对路径，改为
+  「`$PY` → 自动探测常见托管 venv → `python3`」，本机托管环境仍会被优先命中
+- README（中 / 英）、`SKILL.md`、`docs/index.html`：安装示例去掉平台专属路径，
+  统一写成「你的 agent 的 skills 目录」，任何加载 `SKILL.md` 的 agent 都能对号入座
+- `SKILL.md`：环境说明改为通用写法（低版本 Python 的升级方式举例改用
+  `uv python install` / `brew install python@3.12`，不再提某个平台的运行时）
+
 ## v1.2.3 — 2026-10-02
 
 安全修复与工程质量（无功能 / 数据变动）。

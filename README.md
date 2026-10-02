@@ -119,8 +119,8 @@ flowchart LR
 ```bash
 git clone https://github.com/chanyanming-a11y/youtube-interview-digest.git
 cd youtube-interview-digest
-./install.sh                     # 默认装到 ~/.workbuddy/skills/
-./install.sh ~/.my-agent/skills  # 或指定其他支持 SKILL.md 的 agent 的 skills 目录
+./install.sh                     # 自动探测你的 agent skills 目录并安装
+./install.sh ~/.my-agent/skills  # 或显式指定任意支持 SKILL.md 的 agent 目录
 ```
 
 **方式二：手动**：把 `skills/youtube-interview-digest/` 整个目录复制到你的 agent 的 skills 目录下。
@@ -134,7 +134,7 @@ cd youtube-interview-digest
 
 **方式四：让 agent 帮你装（无需懂命令行）**：把下面这段话直接发给你的编程 Agent，它会帮你克隆并放到正确的 skills 目录：
 
-> 请帮我把这个 skill 仓库（https://github.com/chanyanming-a11y/youtube-interview-digest）克隆到本地，并把里面的 `skills/youtube-interview-digest/` 目录复制到你的 agent 的 skills 目录下（如 `~/.workbuddy/skills/` 或 Claude Code 的 skills 目录）。若不确定路径，先告诉我你用的 agent 与 skills 目录位置。完成后简要说明怎么在对话里触发它，例如「帮我总结这个油管视频 <链接>」。
+> 请帮我把这个 skill 仓库（https://github.com/chanyanming-a11y/youtube-interview-digest）克隆到本地，并把里面的 `skills/youtube-interview-digest/` 目录复制到你的 agent 的 skills 目录下（例如 Claude Code 的 `~/.claude/skills/`）。若不确定路径，先告诉我你用的 agent 与 skills 目录位置。完成后简要说明怎么在对话里触发它，例如「帮我总结这个油管视频 <链接>」。
 
 **依赖**：Python ≥ 3.10，以及
 
@@ -190,9 +190,10 @@ python3 -m http.server 8765 --bind 127.0.0.1 -d ./yt_t0GiTyz4syY   # 通过 http
 如果运行环境的**出口 IP 属于云服务商**，YouTube 会对字幕接口整体封锁（`RequestBlocked` / `page needs to be reloaded`），连登录 cookie 也解不开——这是环境限制，不是 skill 的问题，**不要反复重试**。只在**你本机**（正常 IP + 已登录 Chrome）跑一次抓取即可，其余步骤仍在 agent 内完成：
 
 ```bash
-# macOS Terminal
-~/.workbuddy/skills/youtube-interview-digest/local_fetch.sh "https://www.youtube.com/watch?v=<ID>"
+# macOS Terminal（在克隆下来的仓库目录里执行）
+./skills/youtube-interview-digest/local_fetch.sh "https://www.youtube.com/watch?v=<ID>"
 # 默认输出 ~/yt_<ID>；把该目录发回 agent，它会接着做翻译 / 解构 / 渲染
+# 已安装到 skills 目录的话，直接跑该目录下的 local_fetch.sh 即可
 ```
 
 只有「抓取」这一步需要访问 YouTube；翻译 / 分析信号 / 解构 / 渲染都不需要联网。

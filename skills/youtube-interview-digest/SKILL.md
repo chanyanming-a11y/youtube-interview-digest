@@ -19,9 +19,9 @@ YouTube 链接 ─▶ ① 抓取：字幕(含自动浏览器导出内置文字�
 ## 环境
 
 ```bash
-# PY：任意 Python ≥ 3.10。有隔离 venv 就用 venv；在 WorkBuddy 里用 managed runtime 下的 venv
+# PY：任意 Python ≥ 3.10。有隔离 venv 就用 venv
 PY=${PY:-python3}
-S=<本 skill 目录>/scripts          # 例如 ~/.workbuddy/skills/youtube-interview-digest/scripts
+S=<本 skill 目录>/scripts          # 例如 <skills 目录>/youtube-interview-digest/scripts
 $PY -c "import yt_dlp, youtube_transcript_api" 2>/dev/null || $PY -m pip install -q -r $S/../requirements.txt
 
 # 可选：自动浏览器导出 YouTube 自带文字稿需要 Playwright（仅当 yt-dlp / 页面降级都拿不到字幕时）
@@ -30,7 +30,7 @@ $PY -c "import playwright" 2>/dev/null || $PY -m pip install -q playwright
 
 ```
 
-Python 版本低于 3.10 时（比如 macOS 自带的 3.9），先装一个新版本或换用 managed runtime，再执行后续步骤。
+Python 版本低于 3.10 时（比如 macOS 自带的 3.9），先装一个新版本（`uv python install 3.12`、`brew install python@3.12` 等）或用 venv 指定解释器，再执行后续步骤。
 
 工作目录约定：`W=<workspace>/yt_<videoId>/`，所有中间产物和最终报告都放在这里。
 
