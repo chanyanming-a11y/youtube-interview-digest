@@ -11,6 +11,9 @@
 
 ![Demo: scrolling through the report](docs/images/demo.gif)
 
+**Contents**: [Quickstart](#quickstart) · [What you get](#what-you-get) · [Example](#example) · [Why not just a chat model](#why-not-just-paste-the-captions-into-a-model) · [How it works](#how-it-works)
+· [Can't get the captions?](#cant-get-the-captions) · [Why trust the output](#why-trust-the-output) · [Known limitations](#known-limitations) · [FAQ](#faq) · [Compliance & privacy](#compliance--privacy) · [Directory structure](#directory-structure)
+
 ## Quickstart
 
 ```bash

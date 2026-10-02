@@ -53,7 +53,11 @@ class MarkdownLinksTest(unittest.TestCase):
             body = Path(path).read_text(encoding="utf-8")
             for match in list(_MD_LINK.finditer(body)) + list(_IMG_SRC.finditer(body)):
                 target = match.group(2 if match.re is _MD_LINK else 1).split()[0].strip("<>")
-                if target.startswith(("http://", "https://", "mailto:", "#")):
+                if target.startswith(("http://", "https://", "mailto:")):
+                    continue
+                if target.startswith("#"):
+                    # 同文件锚点：目标就是本文件自己
+                    yield path, path, target[1:]
                     continue
                 file_part, _, frag = target.partition("#")
                 yield path, os.path.normpath(os.path.join(os.path.dirname(path), file_part)), frag
