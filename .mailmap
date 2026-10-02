@@ -1,0 +1,8 @@
+# Normalise author / committer identities for `git log`, `git shortlog` and the
+# Contributors graph.
+#
+# GitHub's canonical noreply form is "<numeric-id>+<login>@users.noreply.github.com".
+# An earlier commit used the login-only form (which GitHub cannot link to an
+# account) and one used a personal address; both are folded into the canonical one.
+chanyanming-a11y <255505075+chanyanming-a11y@users.noreply.github.com> <chanyanming-a11y@users.noreply.github.com>
+chanyanming-a11y <255505075+chanyanming-a11y@users.noreply.github.com> <chanyanming@gmail.com>
