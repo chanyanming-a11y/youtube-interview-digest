@@ -66,6 +66,20 @@
 
 报告左侧固定内嵌播放器和热度曲线，点击任意时间码即可跳到对应位置；视频禁止内嵌时，会自动改为在新标签页打开 `youtube.com/watch?v=…&t=…s`。同时输出一份 Markdown 版，时间点是标准 YouTube 链接，可以直接贴进笔记或文档。
 
+## 报告页的交互
+
+报告是一个自包含的静态 HTML，双击即开、无需服务器：
+
+- **页内播放 + 可点击时间戳**：左侧吸顶播放器配自建极简控制条（进度 / 时间 / 全屏）；点任意时间码即 seek 到对应秒。视频禁止内嵌时自动改为新标签页打开 `youtube.com/watch?v=…&t=…s`。
+- **无干扰播放**：YouTube 自带内嵌会在暂停 / 结束时弹出标题栏、频道行和「更多视频」推荐——这些来自跨域 iframe，CSS 移不掉。报告在播放器上盖一层**常驻透明护盾**，始终吞掉指针事件，让 YouTube 收不到 hover，从而**播放中也不弹它的 chrome**；暂停 / 结束时护盾显形为封面（缩略图 + 播放键），右上角可一键切回原画面。
+- **全文朗读**：标题下方「朗读全文」按钮逐块朗读全文各栏目（结论 / 框架 / 观点 / 金句 / 冲突 / 热点 / 评论 / 译稿），当前块高亮并自动滚动；**双击正文任意段落即从该处起读**。音源三选一，按可用度自动优选：
+  - **微软 Edge 晓晓 Neural**——免费、零密钥、最自然，默认首选（在跑本地服务的机器 `pip install edge-tts` 即启用）；
+  - **豆包**（字节火山引擎）——把 `scripts/tts_config.example.json` 复制为 `tts_config.json` 填入 `appid/token`；
+  - **浏览器原生 TTS**——离线兜底。
+  朗读中文时时间戳按「分 / 秒」口语读出（`07:20` → 「零七分二十秒」）。
+- **页内播放已自动化**：`render_report.py` 渲染后会**自动拉起本地服务**（`serve_report.py`，仅绑 `127.0.0.1`），并输出 `preview_url`——有合法 origin，视频页内直接播、时间码是 seek。该服务同时充当**朗读的本地 TTS 代理**：豆包密钥只经它转发、不进 `report.html`、不进仓库。
+- **离线单文件分享**：`report.html` 自包含（CSS / JS / 数据全部内联，仅视频与封面缩略图走 YouTube CDN）；直接发给别人即可，无需服务器。以 `file://` 打开时自动降级为浏览器原生朗读，并显示可页内播放的本地预览链接。
+
 ## 工作流
 
 ```mermaid
@@ -115,7 +129,7 @@ python3 -m pip install -r skills/youtube-interview-digest/requirements.txt   # y
 - 「精读 / 拆解这期播客，要带时间戳」
 - 「这是某期访谈的字幕文件（.srt / .vtt / 带时间戳的 txt），帮我做精读」
 
-agent 会按 `SKILL.md` 的流程执行，最后给出 `report.html` 和 `report.md`。
+agent 会按 `SKILL.md` 的流程执行，最后给出 `report.html` 和 `report.md`。渲染时会**自动拉起本地预览服务**并给出 `http://127.0.0.1:<port>/report.html` 链接——从这里打开可页内播放、点时间码即 seek；也可直接双击 `report.html`（`file://` 下显示封面，点封面上的本地预览链接切到可播模式）。
 
 也可以单独运行脚本：
 
@@ -137,12 +151,25 @@ python3 -m http.server 8765 --bind 127.0.0.1 -d ./yt_t0GiTyz4syY   # 通过 http
 | 1 | yt-dlp | 全部数据 | 否 |
 | 2 | 公开网页的 `ytInitialData` + InnerTube `/next` | 元数据、章节、热度、评论和回复 | 否 |
 | 3 | 视频描述里的外部转写（目前支持 Substack 播客文章） | 带说话人分离和词级时间戳的转写 | 否 |
-| 4 | `--cookies-from-browser chrome` / `--cookies cookies.txt` | 字幕 | **是，需要用户明确同意** |
-| 5 | 用户在 YouTube「显示文字记录」里复制，或提供 .srt / .vtt | 字幕 | 否 |
+| 4 | **自动浏览器导出**「显示文字记录」（`fetch_transcript_browser.py`，Playwright 驱动本机已登录 Chrome） | 字幕 | 否（复用本机登录态） |
+| 5 | `--cookies-from-browser chrome` / `--cookies cookies.txt` | 字幕 | **是，需要用户明确同意** |
+| 6 | 用户在 YouTube「显示文字记录」里复制，或提供 .srt / .vtt | 字幕 | 否 |
 
-退出码：`0` 成功 · `2` URL 或网络错误 · `3` 被拦截且网页降级也失败 · `4` 除字幕外的数据都已保存，需要按第 4 或第 5 层补字幕。
+退出码：`0` 成功 · `2` URL 或网络错误 · `3` 被拦截且网页降级也失败 · `4` 除字幕外的数据都已保存，需要按第 4–6 层补字幕。
 
 外部转写会自动和视频时长比对，相差超过 5 秒时会给出警告，防止时间轴错位。
+
+### 出口 IP 是云 IP（agent / 沙箱）时：本机一键抓取
+
+如果运行环境的**出口 IP 属于云服务商**，YouTube 会对字幕接口整体封锁（`RequestBlocked` / `page needs to be reloaded`），连登录 cookie 也解不开——这是环境限制，不是 skill 的问题，**不要反复重试**。只在**你本机**（正常 IP + 已登录 Chrome）跑一次抓取即可，其余步骤仍在 agent 内完成：
+
+```bash
+# macOS Terminal
+~/.workbuddy/skills/youtube-interview-digest/local_fetch.sh "https://www.youtube.com/watch?v=<ID>"
+# 默认输出 ~/yt_<ID>；把该目录发回 agent，它会接着做翻译 / 解构 / 渲染
+```
+
+只有「抓取」这一步需要访问 YouTube；翻译 / 分析信号 / 解构 / 渲染都不需要联网。
 
 ## 质量保障
 
@@ -162,12 +189,16 @@ youtube-interview-digest/
 ├── skills/youtube-interview-digest/     ← 复制这个目录即可安装
 │   ├── SKILL.md                         流程总纲（agent 读取）
 │   ├── requirements.txt
+│   ├── local_fetch.sh                   本机一键抓取（绕开云 IP 封锁）
 │   ├── scripts/
 │   │   ├── fetch_youtube.py             抓取入口 + 自动降级
 │   │   ├── page_fallback.py             免登录抓取：网页数据 + 评论 + Substack 转写
 │   │   ├── transcript_utils.py          多格式字幕解析、去重、分段、说话人
+│   │   ├── fetch_transcript_browser.py  自动浏览器导出「显示文字记录」
 │   │   ├── analyze_signals.py           回看高峰检测、评论时间戳聚类、关键词
-│   │   └── render_report.py             校验 + 渲染 HTML 和 Markdown
+│   │   ├── render_report.py             校验 + 渲染 HTML 和 Markdown
+│   │   ├── serve_report.py              本地预览服务 + 朗读 TTS 代理（仅 127.0.0.1）
+│   │   └── tts_config.example.json      豆包 TTS 配置样例（复制为 tts_config.json 填密钥）
 │   ├── references/
 │   │   ├── translation-guide.md         译稿规范
 │   │   ├── analysis-framework.md        解构、热度补充、压缩的方法论
