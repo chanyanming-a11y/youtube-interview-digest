@@ -26,13 +26,26 @@ An agent skill in the `SKILL.md` format. Given a YouTube link (or a transcript f
 - a summary item has no timestamp, or its timestamp is beyond the video length
 - an English quote can't be found in the transcript (fuzzy match). Repeated lines, such as a cold-open teaser, resolve to the nearest occurrence
 
+## Why not just ask a model / NotebookLM?
+
+A general assistant gives you *a summary*. This gives you a report you can **verify, click and reproduce**.
+
+| | Paste the captions into a chat model | NotebookLM-style video Q&A | This skill |
+|---|---|---|---|
+| Every claim links back to the exact second | ❌ timestamps get invented | ⚠️ cites, but not sentence-aligned | ✅ timestamps come from real caption paragraphs; out-of-range ones hard-fail |
+| Are the "verbatim" quotes real? | ❌ usually reworded | ⚠️ depends on the model | ✅ quotes are fuzzy-matched against the transcript (0.6) and the report **refuses to publish** otherwise |
+| What the audience cared about | ❌ invisible | ❌ invisible | ✅ combines the "Most replayed" heat curve with timestamps typed in comments, incl. cold zones |
+| Where the speakers disagree | ❌ consensus only | ❌ consensus only | ✅ at least one **viewpoint conflict** is mandatory, including guest-vs-comments |
+| Output | a chat message | a note inside the platform | ✅ a self-contained `report.html` + `report.md` you can share offline |
+| Repeatable | ❌ wording changes every run | ⚠️ unpredictable | ✅ the method lives in `references/`, the scripts enforce structure and validation |
+
 ## Example
 
 [Netflix CPTO Elizabeth Stone on Lenny's Podcast](https://www.youtube.com/watch?v=t0GiTyz4syY). The episode is 72 minutes long, with about 13k words and 218 comment threads. The resulting report has 113 clickable timestamps, 6 TL;DR items, 8 framework nodes, 10 verified quotes, 6 viewpoint conflicts, 6 hotspots, and 2 fact-checks. See [`examples/`](examples/netflix-elizabeth-stone/).
 
-> 🎬 **Demo**: the live interactive version (https://chanyanming-a11y.github.io/youtube-interview-digest/example-report.html) lets you click any timestamp to seek — the best way to see it work.
-> <!-- Placeholder: record a 10–20s screen capture as docs/images/demo.gif, then uncomment the next line to show it here -->
-> <!-- ![Demo](docs/images/demo.gif) -->
+> 🎬 **Demo**: below is a scroll-through of the report. The [live interactive version](https://chanyanming-a11y.github.io/youtube-interview-digest/example-report.html) lets you click any timestamp to seek — the best way to see it work.
+
+![Demo: scrolling through the report](docs/images/demo.gif)
 
 ## The report page
 
@@ -59,6 +72,13 @@ python3 -m pip install -r skills/youtube-interview-digest/requirements.txt   # P
 ```
 
 Then ask the agent something like "summarize this YouTube interview with timestamps: <url>".
+
+**Claude Code plugin marketplace (one line)**
+
+```bash
+/plugin marketplace add chanyanming-a11y/youtube-interview-digest
+/plugin install youtube-interview-digest@youtube-interview-digest
+```
 
 **Install via your coding agent (no command line needed)**: paste the following to your agent and it will clone and place the skill in the right skills directory:
 
@@ -153,10 +173,78 @@ It writes `transcript.md` / `paragraphs.json`, keeps any existing `meta.json` / 
 | Caption language doesn't match the video | Switch the caption track at the bottom of the panel and pick the original (usually marked "auto-generated") |
 | Captions work but there's no heatmap / comments | Normal — those are fetched separately. The report still renders; "hotspots" just falls back to content judgement |
 
-## Notes
+## Known limitations
 
-- For personal study and research. Respect YouTube's Terms of Service and content copyright. When sharing reports publicly, render with `--no-transcript` (YouTube captions are platform content; redistributing large chunks may breach ToS). This repo's `examples/` and the GitHub Pages demo are **rendered with `--no-transcript`**: they keep only the digest, short quotes and translated comment excerpts — **no full transcript** — and the raw `transcript*.json` / `comments.json` are not committed. No commenter usernames appear in the reports.
-- Never commit cookie files. They are excluded by `.gitignore`.
+- **Captions are the bottleneck.** When your network is blocked *and* the video description has no external transcript, you have to supply the captions yourself (see "Can't get the captions?" above) or consent to reading browser cookies.
+- **Embedded playback**: some creators forbid embedding, and a flagged network can make the player fail with error 150 / 101 (`file://` can fail with 153). In those cases timestamps open YouTube in a new tab at the exact second instead of seeking in place.
+- **Comment coverage**: by default the top 300 threads plus the first 5 replies of the 15 busiest threads — not the full comment set.
+- **Heatmap**: only videos with enough views carry the "Most replayed" curve. New or niche videos have none, so hotspots fall back to content and comments.
+- **Analysis quality depends on the agent's model.** The scripts guarantee structure and verifiability; translation and judgement quality track the model you run.
+
+## Directory structure
+
+```
+youtube-interview-digest/
+├── skills/youtube-interview-digest/     ← copy this directory to install
+│   ├── SKILL.md                         the pipeline the agent reads
+│   ├── requirements.txt
+│   ├── local_fetch.sh                   one-shot fetch on your own machine
+│   ├── scripts/                         fetch / parse / analyse / render / serve
+│   ├── references/                      translation guide, deconstruction framework, digest schema
+│   └── assets/report_template.html      report template
+├── examples/netflix-elizabeth-stone/    full example (report + intermediate artefacts)
+├── docs/case-study.md                   what the example report is worth, section by section
+├── docs/images/                         README screenshots + demo GIF
+├── docs/index.html                      GitHub Pages landing page
+├── tests/                               stdlib-only unit + security tests
+├── .github/workflows/                   ci.yml (lint + tests + coverage gate) / release.yml
+├── pyproject.toml                       ruff + coverage gate config
+├── CONTRIBUTING.md · CODE_OF_CONDUCT.md · ROADMAP.md
+├── SECURITY.md · PRIVACY.md · CHANGELOG.md
+├── install.sh
+└── LICENSE
+```
+
+## FAQ
+
+**Do I need Python?**
+Yes — fetching, parsing, scoring, rendering and validation are Python scripts (≥ 3.10). The final report is plain static HTML; no Node or front-end build.
+
+**There are no captions / I can't fetch them — now what?**
+Three options under "Can't get the captions?" above. Whatever you export, **keep the timestamps**.
+
+**Why is there no heatmap / hotspots section?**
+Only videos with enough views carry "Most replayed" data. Without it, hotspots fall back to content and comments and the report says so under caveats — that's a data limitation, not a rendering failure.
+
+**Are the comments complete?**
+No: the top 300 threads plus the first 5 replies of the 15 busiest threads. Full comment scraping is slow and trips rate limits.
+
+**Player error 150 / 101 / 153?**
+150 / 101 usually means the creator forbade embedding; 153 means you opened the file over `file://`. Timestamps then open YouTube in a new tab at the exact second — open the auto-started localhost preview to play in-page.
+
+**Does it send my data anywhere?**
+No server, no telemetry. See [PRIVACY.md](PRIVACY.md) for exactly what goes to YouTube and what stays local.
+
+## Compliance
+
+- For personal study and research. Respect YouTube's Terms of Service and content copyright.
+- **When sharing a report publicly**, render with `render_report.py --no-transcript` so the full translated transcript is dropped and only the digest, short quotes and clickable timestamps remain. YouTube captions are platform content — redistributing large chunks may breach ToS.
+- This repo's `examples/` and the GitHub Pages demo are **rendered with `--no-transcript`**: they keep only the digest, short quotes and translated comment excerpts — **no full transcript** — and the raw `transcript*.json` / `comments.json` are not committed. No commenter usernames appear in the reports.
+- Reading browser login cookies is a sensitive operation; the skill requires explicit user consent first. **Never commit a cookie file** — `.gitignore` excludes it.
 - Security (vulnerability reporting, SSRF / cookie notes): see [SECURITY.md](SECURITY.md).
-- Privacy & data flow (what leaves your machine, what stays local, cookie handling): see [PRIVACY.md](PRIVACY.md).
-- MIT licensed.
+- Privacy and data flow (what leaves your machine, what stays local, how cookies are handled): see [PRIVACY.md](PRIVACY.md).
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) or the [Releases](https://github.com/chanyanming-a11y/youtube-interview-digest/releases) page.
+
+## Contributing
+
+- **Want to change something?** Start with [CONTRIBUTING.md](CONTRIBUTING.md) (local setup, tests, lint, conventions), then pick from the [roadmap](ROADMAP.md) or an issue labelled `good first issue`.
+- **Code of conduct**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+- **Reporting a bug**: include the video link, repro steps and the section of `report.html` that misbehaves. Security issues go through the private channel in [SECURITY.md](SECURITY.md).
+
+## License
+
+[MIT](LICENSE).
+

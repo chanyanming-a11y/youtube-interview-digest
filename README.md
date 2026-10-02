@@ -10,6 +10,8 @@
 
 ---
 
+**目录**：[它解决什么问题](#它解决什么问题) · [和直接问大模型有什么不同](#和直接问大模型--notebooklm-有什么不同) · [效果示例](#效果示例) · [报告包含什么](#报告包含什么) · [报告页的交互](#报告页的交互) · [工作流](#工作流) · [安装](#安装) · [使用](#使用) · [抓取链路](#抓取链路被-youtube-拦了怎么办) · [质量保障](#质量保障) · [目录结构](#目录结构) · [已知限制](#已知限制) · [常见问题](#常见问题) · [合规说明](#合规说明) · [更新记录](#更新记录)
+
 ## 它解决什么问题
 
 | 痛点 | 常见做法 | 这个 skill 的做法 |
@@ -18,6 +20,21 @@
 | 概括看不出哪句是原话、哪句是 AI 编的 | 只能凭感觉信 | 金句**逐字比对原文**，匹配不上就拒绝出报告；所有时间点来自真实字幕段落 |
 | 不知道观众真正在意哪段 | 翻评论区 | 结合 YouTube「重复观看」热度曲线和评论里的时间戳，定位**讨论热点和冷区** |
 | 总结里只剩共识，没有锋芒 | 缺乏上下文 | 专门拆出**观点冲突**：嘉宾 vs 主持人 / 行业共识 / 评论区 / 前后自相矛盾 / 隐含张力 |
+
+## 和直接问大模型 / NotebookLM 有什么不同
+
+把视频丢给一个通用助手也能出摘要，但会缺三样东西：**可核验、可跳转、可复现**。
+
+| | 直接粘贴字幕问大模型 | NotebookLM 等视频问答 | 这个 skill |
+|---|---|---|---|
+| 结论能否一键跳回原视频 | ❌ 时间戳容易编错 | ⚠️ 有引用但不保证逐句对齐 | ✅ 每个时间点都取自真实字幕段落，超出时长直接报错 |
+| 引用的「原话」是否可信 | ❌ 常见改写/润色 | ⚠️ 取决于模型 | ✅ 金句逐字比对原文，匹配不上（阈值 0.6）**拒绝出报告** |
+| 观众的关注点 | ❌ 看不到 | ❌ 看不到 | ✅ 结合「重复观看」热度曲线 + 评论里的时间戳，标出热点与冷区 |
+| 观点的分歧面 | ❌ 通常只给共识 | ❌ 通常只给共识 | ✅ 强制至少 1 条**观点冲突**，含嘉宾 vs 评论区的反驳 |
+| 产出形态 | 聊天里的一段文字 | 平台内的笔记 | ✅ 可离线分享的单文件 `report.html` + `report.md` |
+| 每次结果是否一致 | ❌ 每次措辞都变 | ⚠️ 不确定 | ✅ 方法论写在 `references/`，脚本保证结构与校验一致 |
+
+一句话：通用助手给你**一段总结**，这个 skill 给你**一份可查证、能跳转、结构固定的报告**。
 
 ## 效果示例
 
@@ -33,9 +50,9 @@
 
 👉 看完整报告：[`examples/netflix-elizabeth-stone/`](examples/netflix-elizabeth-stone/)（或 [🌐 在线交互版](https://chanyanming-a11y.github.io/youtube-interview-digest/example-report.html)）　👉 看价值拆解：[`docs/case-study.md`](docs/case-study.md)
 
-> 🎬 **演示**：在线交互版（链接同上）可直接点击时间点跳转，最能说明效果。
-> <!-- 占位：录制一段 10–20 秒的屏录保存为 docs/images/demo.gif 后，取消下一行注释即可在此显示演示动画 -->
-> <!-- ![演示](docs/images/demo.gif) -->
+> 🎬 **演示**：下面是报告滚动预览；打开 [🌐 在线交互版](https://chanyanming-a11y.github.io/youtube-interview-digest/example-report.html) 可以直接点击时间点跳转，最能说明效果。
+
+![报告演示：滚动浏览整份报告](docs/images/demo.gif)
 
 <table>
 <tr>
@@ -108,7 +125,14 @@ cd youtube-interview-digest
 
 **方式二：手动**：把 `skills/youtube-interview-digest/` 整个目录复制到你的 agent 的 skills 目录下。
 
-**方式三：让 agent 帮你装（无需懂命令行）**：把下面这段话直接发给你的编程 Agent，它会帮你克隆并放到正确的 skills 目录：
+**方式三：Claude Code 插件市场（一行命令）**
+
+```bash
+/plugin marketplace add chanyanming-a11y/youtube-interview-digest
+/plugin install youtube-interview-digest@youtube-interview-digest
+```
+
+**方式四：让 agent 帮你装（无需懂命令行）**：把下面这段话直接发给你的编程 Agent，它会帮你克隆并放到正确的 skills 目录：
 
 > 请帮我把这个 skill 仓库（https://github.com/chanyanming-a11y/youtube-interview-digest）克隆到本地，并把里面的 `skills/youtube-interview-digest/` 目录复制到你的 agent 的 skills 目录下（如 `~/.workbuddy/skills/` 或 Claude Code 的 skills 目录）。若不确定路径，先告诉我你用的 agent 与 skills 目录位置。完成后简要说明怎么在对话里触发它，例如「帮我总结这个油管视频 <链接>」。
 
@@ -277,7 +301,15 @@ youtube-interview-digest/
 │   │   └── digest-schema.md             digest.json 字段说明
 │   └── assets/report_template.html      报告模板
 ├── examples/netflix-elizabeth-stone/    完整示例（报告 + 中间产物）
-├── docs/case-study.md                   以示例报告讲解价值
+├── docs/
+│   ├── case-study.md                    以示例报告讲解价值
+│   ├── index.html                       GitHub Pages 落地页
+│   └── images/                          README 截图 + 演示动图
+├── tests/                               仅标准库的单元 / 安全测试
+├── .github/workflows/                   ci.yml（lint + 测试 + 覆盖率门禁）/ release.yml
+├── pyproject.toml                       ruff 与覆盖率门禁配置
+├── CONTRIBUTING.md · CODE_OF_CONDUCT.md · ROADMAP.md
+├── SECURITY.md · PRIVACY.md · CHANGELOG.md
 ├── install.sh
 └── LICENSE
 ```
@@ -299,9 +331,47 @@ youtube-interview-digest/
 - 安全相关（漏洞反馈、SSRF / 密钥注意事项）：见 [SECURITY.md](SECURITY.md)。
 - 隐私与数据流向（对外发送什么、什么留本地、cookies 处理）：见 [PRIVACY.md](PRIVACY.md)。
 
+## 常见问题
+
+**一定要装 Python 吗？**
+要。抓取、解析、信号计算、渲染、校验都是 Python 脚本（≥ 3.10）。最终报告是纯静态 HTML，不需要 Node 或任何前端构建。
+
+**视频没有字幕 / 抓不到字幕怎么办？**
+三条路，见[「拿不到字幕？手动导出完整字幕」](#拿不到字幕手动导出完整字幕最不容易踩坑的一条路)：YouTube 自带「显示文字记录」复制、yt-dlp 下字幕文件、本机一键抓全。**导出的文本一定要带时间戳**。
+
+**为什么报告里没有「讨论热点」或热度曲线？**
+只有播放量足够的视频才有「重复观看」数据。没有时热点改为按内容和评论判断，并在报告「读之前需要知道」里注明——这是数据本身的限制，不是渲染失败。
+
+**评论是全量的吗？**
+不是。默认抓前 300 条热门线程，以及回复最多的 15 条线程的前 5 条回复。全量抓取会很慢且容易触发风控。
+
+**内嵌播放器报错 150 / 101 / 153？**
+150 / 101 通常是视频作者禁止内嵌，153 是用 `file://` 直接打开导致的。这两种情况下时间点会自动改为新标签页跳转（带精确秒数）；用渲染时自动拉起的本地预览链接打开即可页内播放。
+
+**朗读没有声音，或者中文音色很机械？**
+音源按可用度自动优选：**微软 Edge 晓晓 Neural**（在跑本地服务的机器上 `pip install edge-tts`，免费且最自然）→ **豆包**（需要自己填 appid/token）→ **浏览器原生**（兜底，中文偏机械）。用 `file://` 打开时没有本地代理，只会保留浏览器原生。
+
+**只想翻译，不想解读，可以吗？**
+这个 skill 的定位是「精读」：框架、观点、金句、观点冲突是强制产出。只要逐段纯翻译的话，直接让模型翻译更省事。
+
+**支持 B 站 / 小宇宙 / 本地视频文件吗？**
+目前只支持 YouTube。其他视频平台、纯网页文章不在范围内。
+
+**会把我的数据传出去吗？**
+不。没有服务器、没有遥测。详细的数据流向（什么发往 YouTube、什么留在本地、cookie 怎么处理）见 [PRIVACY.md](PRIVACY.md)。
+
+**报告能分享给别人吗？**
+可以，`report.html` 是自包含单文件。公开分享时建议加 `--no-transcript` 去掉全文译稿（见[合规说明](#合规说明)）。
+
 ## 更新记录
 
 见 [CHANGELOG.md](CHANGELOG.md)。
+
+## 参与贡献
+
+- **想改点什么**：先看 [CONTRIBUTING.md](CONTRIBUTING.md)（本地开发、跑测试与 lint、改动约定），再从[路线图](ROADMAP.md)或带 `good first issue` 标签的 issue 里挑。
+- **行为准则**：[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
+- **报 Bug**：附上视频链接、复现步骤和出问题的报告板块。安全问题请走私密渠道（[SECURITY.md](SECURITY.md)）。
 
 ## License
 
