@@ -21,6 +21,8 @@ import html
 import json
 import os
 import re
+import socket
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -294,6 +296,34 @@ def to_markdown(meta, g, transcript, vid, extra=None):
     return "\n".join(L) + "\n"
 
 
+# ---------------------------------------------------------------- local preview server
+
+def _free_port(start=8765, tries=20):
+    """Find a TCP port on 127.0.0.1 that nothing is listening on yet."""
+    for p in range(start, start + tries):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(("127.0.0.1", p)) != 0:
+                return p
+    return None
+
+
+def _spawn_server(exe, work, port):
+    """Launch serve_report.py detached so it keeps serving after render exits.
+
+    In-page playback requires a real origin (http://localhost); YouTube blocks
+    embedding from file:// (player error 153). Starting the server here makes
+    the localhost preview the default deliverable instead of an opt-in step.
+    """
+    cmd = [exe, os.path.abspath(os.path.join(HERE, "serve_report.py")),
+           "--work", os.path.abspath(work), "--port", str(port)]
+    try:
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         stdin=subprocess.DEVNULL, start_new_session=True)
+        return True
+    except Exception:
+        return False
+
+
 # ---------------------------------------------------------------- main
 
 def _escape_title(title):
@@ -314,6 +344,10 @@ def main():
     ap.add_argument("--strict", action="store_true", help="exit 1 on validation errors")
     ap.add_argument("--no-transcript", action="store_true",
                     help="omit the full transcript section (for publicly shared reports / copyright)")
+    ap.add_argument("--no-serve", action="store_true",
+                    help="do not auto-start a localhost server for in-page playback")
+    ap.add_argument("--port", type=int, default=8765,
+                    help="base port for the auto-started localhost preview server")
     args = ap.parse_args()
     w = args.work
     out = args.out or w
@@ -331,6 +365,21 @@ def main():
     errors, warns = validate(digest, duration, paras)
     transcript = [] if args.no_transcript else \
         load_transcript_zh(args.transcript_zh or os.path.join(w, "transcript_zh.md"), paras)
+
+    # command the page shows on the player poster, so the user can switch from
+    # file:// (where YouTube blocks the embed) to a localhost preview that plays in-page
+    meta["serve_cmd"] = (f'"{sys.executable or "python3"}" '
+                         f'"{os.path.abspath(os.path.join(HERE, "serve_report.py"))}" '
+                         f'--work "{os.path.abspath(w)}" --open')
+
+    # auto-start a localhost server so the deliverable is an in-page-playable URL
+    # (YouTube blocks embedding from file:// → player error 153; http://localhost gives a valid origin)
+    preview_url = None
+    if not args.no_serve:
+        port = _free_port(args.port)
+        if port and _spawn_server(sys.executable, w, port):
+            preview_url = f"http://127.0.0.1:{port}/report.html"
+            meta["preview_url"] = preview_url
 
     payload = {
         "meta": meta, "digest": digest, "transcript": transcript,
@@ -359,8 +408,10 @@ def main():
                              "timestamp_mentions": signals.get("timestamped_mentions")}))
 
     n_ts = sum(len(g(digest)) for g in REQ.values())
+
     print(json.dumps({"html": html_path, "md": md_path, "timestamps": n_ts,
-                      "transcript_rows": len(transcript), "errors": errors, "warnings": warns},
+                      "transcript_rows": len(transcript), "preview_url": preview_url,
+                      "errors": errors, "warnings": warns},
                      ensure_ascii=False, indent=1))
     if errors and args.strict:
         sys.exit(1)

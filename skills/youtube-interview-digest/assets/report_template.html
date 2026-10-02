@@ -26,11 +26,50 @@ b{font-weight:600}
 .side>*{flex:none}
 .player{background:#000;border-radius:6px;overflow:hidden;aspect-ratio:16/9;position:relative}
 .player iframe,.player #yt{position:absolute;inset:0;width:100%;height:100%;border:0}
-.player .fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#fff;text-align:center;padding:24px;background:#111 center/cover no-repeat}
-.player .fallback::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.74)}
-.player .fallback>*{position:relative}
-.player .fallback .tip{color:#d6d3cf;max-width:300px}
-.player .fallback a{margin-top:4px;color:#fff;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.player .fallback{position:absolute;inset:0;display:none;background:#0d0d0d center/cover no-repeat;color:#fff;cursor:pointer;text-align:center}
+.player .fallback::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,8,8,.42),rgba(8,8,8,.05) 42%,rgba(8,8,8,.86))}
+.player .fallback>*{position:relative;z-index:1}
+.player .fb-center{position:absolute;inset:0 0 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:0 16px}
+.player .fb-play{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.95);display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.45);transition:transform .18s ease,box-shadow .18s ease}
+.player .fallback:hover .fb-play{transform:scale(1.09);box-shadow:0 10px 30px rgba(0,0,0,.55)}
+.player .fb-play svg{width:22px;height:22px;fill:#14110f;margin-left:3px}
+.player .fb-label{font-weight:600;font-size:13.5px;line-height:1.5;text-shadow:0 1px 12px rgba(0,0,0,.7)}
+.player .fb-note{font-size:11.5px;line-height:1.55;color:#cecac4;max-width:300px;text-shadow:0 1px 10px rgba(0,0,0,.7)}
+.player .fb-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:8px;padding:9px 11px;font-size:12px;background:linear-gradient(0deg,rgba(8,8,8,.9),rgba(8,8,8,.45) 60%,transparent)}
+.player .fb-bar .grow{flex:1;min-width:0;color:#bdb8b2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.player .fb-copy{flex:none;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;border-radius:13px;padding:3px 10px;font:inherit;cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease}
+.player .fb-copy:hover{background:rgba(255,255,255,.24)}
+.player .fb-copy.done{background:#fff;color:#14110f;border-color:#fff}
+.player .fb-open{flex:none;color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);padding-bottom:1px}
+/* clean (no-distraction) surface — an always-on shield over the iframe.
+   Cross-origin YouTube chrome (title bar, channel row, "more videos", end-screen
+   suggestions, share/watch-later, watermark) can't be styled away; instead the
+   shield swallows every pointer event so YouTube never even gets a hover, and
+   switches to an opaque poster cover while paused/ended. Our own minimal controls
+   live in .cbar. */
+.player .clean{position:absolute;inset:0;z-index:3;cursor:pointer;visibility:hidden;background:transparent}
+.player .clean.on{background:#0d0d0d}
+.player .clean .cimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none}
+.player .clean.on .cimg{display:block}
+.player .clean::after{content:"";position:absolute;inset:0;z-index:1;opacity:0;transition:opacity .2s ease}
+.player .clean.on::after{opacity:1;background:linear-gradient(180deg,rgba(8,8,8,.32),rgba(8,8,8,.03) 44%,rgba(8,8,8,.5))}
+.player .clean .cplay{position:absolute;inset:0;z-index:2;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.player .clean.on .cplay{display:flex}
+.player .clean .cbtn{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.95);display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.45);transition:transform .18s ease}
+.player .clean:hover .cbtn{transform:scale(1.08)}
+.player .clean .cbtn svg{width:22px;height:22px;fill:#14110f;margin-left:3px}
+.player .clean .ctxt{font-size:12.5px;font-weight:600;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.7)}
+.player .ctoggle{position:absolute;top:9px;right:9px;z-index:6;font:inherit;font-size:11px;line-height:1.4;color:#fff;background:rgba(20,17,15,.6);border:1px solid rgba(255,255,255,.34);border-radius:12px;padding:3px 9px;cursor:pointer;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .2s ease}
+.player:hover .ctoggle,.player .ctoggle:focus{opacity:1}
+/* our own minimal controls (clean mode) */
+.player .cbar{position:absolute;left:0;right:0;bottom:0;z-index:4;display:flex;align-items:center;gap:10px;padding:9px 11px;background:linear-gradient(0deg,rgba(8,8,8,.8),rgba(8,8,8,.15) 65%,transparent);opacity:0;pointer-events:none;transition:opacity .2s ease}
+.player:hover .cbar,.player .cbar.show{opacity:1;pointer-events:auto}
+.player .cbar .ptrack{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.3);cursor:pointer;position:relative}
+.player .cbar .pfill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:#e23b2e;width:0}
+.player .cbar .ptime{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:#fff;white-space:nowrap}
+.player .cbar button{font:inherit;font-size:11.5px;color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:3px 9px;cursor:pointer;transition:background .15s ease}
+.player .cbar button:hover{background:rgba(255,255,255,.3)}
+.player .fallback{z-index:7}
 .panel h4{margin:0 0 8px;font-size:12px;color:var(--mute);font-weight:500;display:flex;justify-content:space-between;align-items:baseline}
 .panel+.panel{border-top:1px solid var(--line);padding-top:16px}
 .now{font:12px var(--mono);color:var(--mute)}
@@ -158,6 +197,16 @@ blockquote footer{display:flex;gap:10px;align-items:baseline;margin-top:6px;font
 .tr-tools input:focus{outline:none;border-color:var(--ink)}
 .tr-tools button{border:1px solid var(--line);background:var(--paper);border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--sub)}
 .tr-tools button.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+/* ---------- read-aloud toolbar (top, under title) */
+.readbar{display:flex;align-items:center;gap:8px;margin:14px 0 4px;flex-wrap:wrap}
+.readbar .rd{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--ink);background:var(--paper);border-radius:20px;padding:7px 15px 7px 12px;font-size:14px;cursor:pointer;color:var(--ink);font-weight:600;transition:background .15s ease,color .15s ease}
+.readbar .rd:hover{background:var(--accent-bg)}
+.readbar .rd.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.readbar .rd .ico{width:18px;height:18px;fill:currentColor;flex:none}
+.readbar select{border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:13px;background:var(--paper);color:var(--sub)}
+.readbar .tip{align-self:center}
+/* reading highlight for the block currently being spoken */
+.speaking{background:var(--accent-bg);box-shadow:inset 3px 0 0 var(--accent);border-radius:4px;scroll-margin:90px}
 .tr{max-height:720px;overflow:auto;padding-right:8px;border-top:1px solid var(--line)}
 .tr .row{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line2)}
 .tr .row.active{background:#fbf6e9}
@@ -171,6 +220,7 @@ blockquote footer{display:flex;gap:10px;align-items:baseline;margin-top:6px;font
 mark{background:#f6e3a1;padding:0 1px}
 .foot{color:var(--mute);font-size:12px;padding:24px 0 48px;border-top:1px solid var(--ink);margin-top:8px}
 .foot a{text-underline-offset:3px}
+.foot .build{color:var(--accent);border:1px solid var(--line);border-radius:3px;padding:1px 5px;font-family:var(--mono);font-size:11px}
 </style>
 </head>
 <body>
@@ -178,11 +228,31 @@ mark{background:#f6e3a1;padding:0 1px}
   <aside class="side">
     <div class="player">
       <div id="yt"></div>
-      <div class="fallback" id="fallback">
-        <div style="font-weight:600" id="fbmsg">视频无法在页面内播放</div>
-        <div class="tip" id="fbtip">点时间码会在新标签页打开 YouTube，并跳到对应位置。</div>
-        <a id="openyt" target="_blank" rel="noopener">在 YouTube 打开</a>
+      <div class="clean" id="clean" role="button" tabindex="0" aria-label="播放 / 继续播放">
+        <img class="cimg" id="cleanImg" alt="" referrerpolicy="no-referrer">
+        <div class="cplay">
+          <div class="cbtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="ctxt" id="cleanMsg">播放</div>
+        </div>
       </div>
+      <div class="cbar" id="cbar">
+        <div class="ptrack" id="cprog"><div class="pfill" id="cpfill"></div></div>
+        <span class="ptime" id="ctime">0:00 / 0:00</span>
+        <button id="cfs" type="button" title="全屏">全屏</button>
+      </div>
+      <div class="fallback" id="fallback" role="button" tabindex="0" aria-label="在 YouTube 播放">
+        <div class="fb-center">
+          <div class="fb-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="fb-label" id="fbmsg">在 YouTube 播放</div>
+          <div class="fb-note" id="fbtip">点时间码会在新标签页打开 YouTube，并跳到对应位置。</div>
+        </div>
+        <div class="fb-bar">
+          <span class="grow" id="fbserve">本地文件打开时 YouTube 禁止内嵌；用本地服务预览即可在本页播放</span>
+          <button class="fb-copy" id="fbcopy" type="button">复制预览命令</button>
+          <a class="fb-open" id="openyt" target="_blank" rel="noopener">打开</a>
+        </div>
+      </div>
+      <button class="ctoggle" id="cleanToggle" type="button" title="无干扰画面：用干净封面遮挡 YouTube 的标题栏 / 推荐 / 结束页；点此切换回原画面">无干扰 ✓</button>
     </div>
     <div class="panel heat" id="heatPanel">
       <h4><span>观看热度</span><span class="now" id="nowTs"></span></h4>
@@ -250,6 +320,16 @@ html += `<header class="hero"><div class="kicker">访谈精读${M.channel? ' · 
   ${guests || G.host ? `<div class="people">${guests? '嘉宾：'+guests:''}${guests && G.host? '　':''}${G.host? '主持：'+esc(G.host):''}</div>`:''}
   ${G.one_liner? `<p class="oneliner">${rich(G.one_liner)}</p>`:''}
   ${(G.keywords||[]).length? `<div class="kw">${G.keywords.map(esc).join('、')}</div>`:''}
+  <div class="readbar">
+    <button id="readAll" class="rd" type="button" title="朗读全文（覆盖报告各栏目）">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+      <span class="lbl">朗读全文</span>
+    </button>
+    <select id="rdLang">${(G.quotes||[]).some(q=>q.en)||(D.transcript||[]).some(r=>r.en)?'<option value="bi">中英双语</option>':''}<option value="zh" selected>中文</option>${(G.quotes||[]).some(q=>q.en)?'<option value="en">English</option>':''}</select>
+    <select id="rdRate"><option value="0.85">0.85×</option><option value="0.95" selected>1.0×</option><option value="1.1">1.1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option></select>
+    <select id="rdSrc" title="朗读音源"><option value="native" selected>浏览器</option><option value="edge" hidden>微软语音</option><option value="doubao" hidden>豆包</option></select>
+    <span class="tip">双击正文可从该处起读</span>
+  </div>
 </header>`;
 
 const secs = [];
@@ -349,14 +429,14 @@ if ((G.glossary||[]).length){
 const TR = D.transcript || [];
 if (TR.length){
   const hasEn = TR.some(r=>r.en);
-  const b = `<div class="tr-tools"><input id="q" placeholder="搜索译稿或英文原文">${hasEn? '<button id="bi">显示英文</button>':''}<button id="follow" class="on">跟随播放</button><span class="sep"></span><button id="tts">朗读</button><button id="ttsStop">停止</button><select id="ttsLang">${hasEn?'<option value="bi">中英双语</option>':''}<option value="zh" selected>中文</option>${hasEn?'<option value="en">English</option>':''}</select><select id="ttsRate"><option value="0.85">0.85×</option><option value="1" selected>1×</option><option value="1.2">1.2×</option><option value="1.5">1.5×</option></select></div>
+  const b = `<div class="tr-tools"><input id="q" placeholder="搜索译稿或英文原文">${hasEn? '<button id="bi">显示英文</button>':''}<button id="follow" class="on">跟随播放</button></div>
     <div class="tr" id="tr">${TR.map((r,i)=>`<div class="row" data-i="${i}" data-t="${sec(r.t)}">${cell(r.t)}<div>${r.speaker? `<span class="spk">${esc(r.speaker)}</span>`:''}<span class="zh">${esc(r.zh||r.en||'')}</span>${r.en&&r.zh? `<div class="en">${esc(r.en)}</div>`:''}</div></div>`).join('')}</div>`;
   section('transcript','全文译稿', `${TR.length} 段，播放时会自动滚到当前位置。`, b);
 }
 
 const src = sourceLabel(M.subtitle_source);
 const snap = M.snapshot_date || D.generated_at;
-html += `<footer class="foot"><a href="${esc(M.url||link(0))}" target="_blank" rel="noopener">原视频</a>${src? '　字幕：'+esc(src):''}${snap? '　数据截至 '+esc(snap):''}　由 youtube-interview-digest 生成</footer>`;
+html += `<footer class="foot"><a href="${esc(M.url||link(0))}" target="_blank" rel="noopener">原视频</a>${src? '　字幕：'+esc(src):''}${snap? '　数据截至 '+esc(snap):''}　由 youtube-interview-digest 生成　<span class="build" title="本版可离线单文件分享：双击打开即用浏览器原生朗读，无需本地服务；联网+本地服务时用微软晓晓 Neural 语音。时间戳按「分/秒」读，双击正文从该处起读">朗读修正 r5 · 离线可用</span></footer>`;
 main.innerHTML = html;
 
 /* ---------- toc & chapters */
@@ -390,16 +470,25 @@ if ((M.chapters||[]).length){ const c=$('#chapters'); c.style.display='';
 
 /* ---------- player */
 let player = null, ready = false, broken = false, lastSeek = 0;
+const IS_FILE = location.protocol === 'file:';
 $('#openyt').href = link(0);
 if (M.thumbnail) $('#fallback').style.backgroundImage = `url("${M.thumbnail}")`;
-function showFallback(e){
-  broken = true; window.__ytErr = e && e.data != null ? e.data : (e||'timeout');
+function fbSet(msg, note){
   const m=$('#fbmsg'), tip=$('#fbtip');
-  if (m && e && e.data!=null) m.textContent = ({101:'作者关闭了内嵌播放',150:'视频无法在页面内播放',153:'本地打开的文件无法内嵌播放'}[e.data]||'视频无法在页面内播放')+`（错误 ${e.data}）`;
-  if (tip && e && (e.data===150||e.data===101)) tip.textContent = '可能是作者关闭了内嵌，也可能是当前网络受 YouTube 限制。点时间码会在新标签页打开 YouTube，并跳到对应位置。';
-  if (tip && e && e.data===153) tip.textContent = '用本地 http 服务打开这个页面即可内嵌播放。现在点时间码会在新标签页打开 YouTube。';
-  const o=$('#openyt'); o.href = link(lastSeek); o.textContent = lastSeek ? `在 YouTube 从 ${fmt(lastSeek)} 开始看` : '在 YouTube 打开';
-  $('#fallback').style.display = 'flex'; const y=$('#yt'); if (y) y.style.visibility='hidden';
+  if (m) m.textContent = msg;
+  if (tip && note != null) tip.textContent = note;
+}
+function showFallback(e){
+  broken = true;
+  const code = e && e.data != null ? e.data : null;
+  window.__ytErr = code != null ? code : (e||'timeout');
+  if (code === 101) fbSet('作者关闭了内嵌播放', '该视频不允许站外嵌入。点上方按钮或任意时间码，会在新标签页打开 YouTube 并跳到对应位置。');
+  else if (code === 150) fbSet('视频无法在页面内播放', '可能是作者关闭了内嵌，或当前网络受 YouTube 限制。点时间码会在新标签页打开 YouTube 并跳到对应位置。');
+  else fbSet('在 YouTube 播放', '本地文件打开时浏览器禁止 YouTube 内嵌。点时间码会在新标签页打开并跳到对应位置；或用下方「复制预览命令」在本页直接播放。');
+  const o=$('#openyt'); if (o) o.href = link(lastSeek);
+  const f=$('#fallback'); if (f) f.style.display = 'block'; const y=$('#yt'); if (y) y.style.visibility='hidden';
+  const c=$('#clean'); if (c) c.classList.remove('on');
+  const tg=$('#cleanToggle'); if (tg) tg.style.display = 'none';
 }
 function jump(t){
   lastSeek = t;
@@ -415,15 +504,126 @@ document.addEventListener('click', e=>{
   const a = e.target.closest('a.ts'); if (!a) return;
   e.preventDefault(); if (jump(parseFloat(a.dataset.t))) a.classList.add('playing');
 });
+/* poster interactions: click anywhere -> open on YouTube; copy the local-preview command */
+(function(){
+  const f = $('#fallback');
+  if (f){
+    f.addEventListener('click', ()=> window.open(link(lastSeek), '_blank', 'noopener'));
+    f.addEventListener('keydown', e=>{ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); window.open(link(lastSeek), '_blank', 'noopener'); } });
+  }
+  const bar = f && f.querySelector('.fb-bar');
+  if (bar) bar.addEventListener('click', e=> e.stopPropagation());   // don't double-open from the bar
+  const cp = $('#fbcopy');
+  if (cp) cp.addEventListener('click', e=>{
+    e.stopPropagation();
+    const cmd = (M.serve_cmd || '').trim(); if (!cmd) return;
+    const done = ()=>{ cp.textContent = '已复制'; cp.classList.add('done');
+      setTimeout(()=>{ cp.textContent = '复制预览命令'; cp.classList.remove('done'); }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(cmd).then(done).catch(()=>{});
+    else { const ta=document.createElement('textarea'); ta.value=cmd; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(_){} ta.remove(); }
+  });
+  const sv = $('#fbserve'); if (sv && M.serve_cmd) sv.title = M.serve_cmd;
+})();
+// when the page is opened directly as a file, surface the auto-started localhost
+// preview so the video can still play in-page (YouTube blocks file:// embedding)
+(function(){
+  if (!IS_FILE || !M.preview_url) return;
+  const s = document.getElementById('fbserve');
+  if (s){
+    s.innerHTML = '已启动本地预览（本页可播放）：<a class="fb-open" href="' + M.preview_url
+                + '" target="_blank" rel="noopener">' + M.preview_url + '</a>';
+  }
+})();
 if (!VID){ showFallback(); }
 else {
+  if (IS_FILE) showFallback();   // file:// can't embed — show the poster at once, no 12s black wait
   window.onYouTubeIframeAPIReady = function(){
-    player = new YT.Player('yt', { videoId: VID, playerVars: { rel: 0, modestbranding: 1, playsinline: 1, origin: location.protocol.startsWith('http')? location.origin: undefined },
-      events: { onReady: ()=>{ ready = true; }, onError: showFallback } });
+    player = new YT.Player('yt', { videoId: VID, playerVars: { rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, origin: location.protocol.startsWith('http')? location.origin: undefined },
+      events: { onReady: ()=>{ ready = true; broken = false;
+                  const f=$('#fallback'); if (f) f.style.display='none';
+                  const y=$('#yt'); if (y) y.style.visibility='visible';
+                  if (window.__cleanPending){ window.__cleanPending = false; window.__cleanPlay && window.__cleanPlay(); } },
+                onStateChange: e=>{ window.__cleanState && window.__cleanState(e.data); },
+                onError: showFallback } });
   };
-  const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; s.onerror = showFallback; document.head.appendChild(s);
-  setTimeout(()=>{ if (!ready) showFallback(); }, 12000);
+  const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; s.onerror = ()=>showFallback(); document.head.appendChild(s);
+  if (!IS_FILE) setTimeout(()=>{ if (!ready) showFallback(); }, 12000);
 }
+
+/* ---------- clean (no-distraction) surface ----------
+   Cross-origin YouTube chrome (title bar, channel row, "more videos", end-screen
+   suggestions, share/watch-later, watermark) can't be styled away with CSS. We keep an
+   always-on, transparent-while-playing SHIELD above the iframe: it swallows pointer
+   events so YouTube never even gets a hover (and never shows its own chrome); while
+   paused/ended the shield becomes an opaque poster cover. Our minimal controls are in #cbar. */
+(function(){
+  const clean = $('#clean'), img = $('#cleanImg'), msg = $('#cleanMsg'), tg = $('#cleanToggle');
+  const cbar = $('#cbar'), pfill = $('#cpfill'), ptrack = $('#cprog'), ctime = $('#ctime');
+  if (!clean) return;
+  if (IS_FILE || !VID || broken){ if (tg) tg.style.display = 'none'; if (cbar) cbar.style.display = 'none'; clean.style.display = 'none'; return; }
+  let enabled = localStorage.getItem('yt-clean') !== 'off';
+  if (img){
+    img.src = 'https://i.ytimg.com/vi/' + VID + '/maxresdefault.jpg';
+    img.onerror = ()=>{ img.onerror = null; img.src = M.thumbnail || ('https://i.ytimg.com/vi/' + VID + '/hqdefault.jpg'); };
+  }
+
+  function reflect(){
+    if (tg){ tg.textContent = enabled ? '无干扰 ✓' : '原画面'; tg.classList.toggle('on', enabled); }
+    clean.style.visibility = enabled ? 'visible' : 'hidden';
+    clean.style.pointerEvents = enabled ? 'auto' : 'none';
+    if (cbar) cbar.style.display = enabled ? '' : 'none';
+  }
+  function opaque(text){ if (!enabled || broken) return; if (msg && text) msg.textContent = text; clean.classList.add('on'); }
+  function veil(){ clean.classList.remove('on'); }                 // transparent shield while playing
+  function play(){                                                  // click on the shield → toggle play/pause
+    if (!ready || broken || !player){ window.__cleanPending = true; return; }
+    if (player.getPlayerState && player.getPlayerState() === 1) player.pauseVideo();
+    else player.playVideo();
+  }
+
+  clean.addEventListener('click', play);
+  clean.addEventListener('keydown', e=>{ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); play(); } });
+  if (ptrack) ptrack.addEventListener('click', e=>{
+    e.stopPropagation();
+    if (!(ready && !broken && player && player.getDuration)) return;
+    const r = ptrack.getBoundingClientRect();
+    const p = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    player.seekTo(p * (player.getDuration() || DUR || 0), true);
+  });
+  if (cbar) cbar.addEventListener('click', e=> e.stopPropagation());
+  if ($('#cfs')) $('#cfs').addEventListener('click', e=>{
+    e.stopPropagation();
+    const box = document.querySelector('.player');
+    if (!box) return;
+    if (!document.fullscreenElement){ (box.requestFullscreen || box.webkitRequestFullscreen || function(){}).call(box); }
+    else { (document.exitFullscreen || function(){}).call(document); }
+  });
+  if (tg) tg.addEventListener('click', e=>{
+    e.stopPropagation();
+    enabled = !enabled; localStorage.setItem('yt-clean', enabled ? 'on' : 'off'); reflect();
+    if (!enabled) veil();
+    else if (ready && !broken && player && player.getPlayerState && player.getPlayerState() !== 1) opaque('继续播放');
+  });
+
+  window.__cleanPlay = play;
+  window.__cleanState = function(st){
+    if (!enabled || broken){ return; }
+    if (st === 1) veil();                          // PLAYING  → transparent shield (still blocks hover chrome)
+    else if (st === 2) opaque('已暂停 · 点击继续');  // PAUSED   → opaque poster cover
+    else if (st === 0) opaque('播放结束 · 点击重播');// ENDED    → opaque poster cover
+  };
+  // progress ticker for our own clean control bar
+  setInterval(()=>{
+    if (!enabled || !(ready && !broken && player && player.getCurrentTime)) return;
+    const t = player.getCurrentTime() || 0;
+    const d = (player.getDuration && player.getDuration()) || DUR || 0;
+    if (pfill) pfill.style.width = (d ? (t / d * 100) : 0) + '%';
+    if (ctime) ctime.textContent = fmt(t) + ' / ' + fmt(d);
+  }, 500);
+  reflect();
+  opaque('播放');   // clean poster first so YouTube's initial chrome never shows
+})();
 
 /* ---------- follow playback in transcript */
 const trRows = [...document.querySelectorAll('#tr .row')];
@@ -449,65 +649,231 @@ const q = $('#q'); if (q) q.addEventListener('input', ()=>{
 const bi = $('#bi'); if (bi) bi.addEventListener('click', ()=>{ const on = $('#tr').classList.toggle('bi'); bi.classList.toggle('on', on); bi.textContent = on? '隐藏英文':'显示英文'; });
 const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !follow; fo.classList.toggle('on', follow); });
 
-/* ---------- text-to-speech (voice reading) */
+/* ---------- read-aloud: full article (voice reading) */
 (function(){
-  const ttsBtn = $('#tts'), stopBtn = $('#ttsStop'), langSel = $('#ttsLang'), rateSel = $('#ttsRate');
-  if (!ttsBtn) return;                                   // page has no transcript / controls
+  const btn = document.getElementById('readAll');
+  const langSel = document.getElementById('rdLang');
+  const rateSel = document.getElementById('rdRate');
+  const srcSel  = document.getElementById('rdSrc');
+  if (!btn) return;
   const synth = window.speechSynthesis;
-  if (!synth){                                           // browser without Web Speech API
-    const t = ttsBtn.closest('.tr-tools');
-    if (t) t.insertAdjacentHTML('beforeend', '<span class="tip" style="align-self:center">当前浏览器不支持语音朗读</span>');
-    [ttsBtn, stopBtn, langSel, rateSel].forEach(el => el && el.remove());
+  if (!synth){
+    const bar = btn.closest('.readbar');
+    if (bar) bar.insertAdjacentHTML('beforeend', '<span class="tip" style="align-self:center">当前浏览器不支持语音朗读</span>');
+    [btn, langSel, rateSel, srcSel].forEach(el => el && el.remove());
     return;
   }
-  let idx = -1, paused = false, speaking = false, epoch = 0;
-  function segsFor(r){
-    const zh = r.querySelector('.zh'), en = r.querySelector('.en');
-    const z = zh ? zh.textContent.trim() : '', e = en ? en.textContent.trim() : '';
-    const w = langSel.value;
-    if (w === 'en') return e ? [{t:e, lang:'en-US'}] : [];
-    if (w === 'bi'){ const a = []; if (z) a.push({t:z, lang:'zh-CN'}); if (e) a.push({t:e, lang:'en-US'}); return a; }
-    return z ? [{t:z, lang:'zh-CN'}] : [];
-  }
-  function pickVoice(lang){
-    const vs = synth.getVoices(); if (!vs.length) return null;
-    const pre = lang.split('-')[0];
-    return vs.find(v => (v.lang||'').toLowerCase().startsWith(pre)) || null;
-  }
-  function scrollToRow(r){ const box = $('#tr'); if (box) box.scrollTo({ top: r.offsetTop - box.offsetTop - 120, behavior:'smooth' }); }
-  function clearHi(){ trRows.forEach(r => r.classList.remove('speaking')); }
-  function speakRow(ep){
-    if (ep !== epoch) return;
-    idx++;
-    if (idx >= trRows.length){ finish(); return; }
-    const r = trRows[idx]; r.classList.add('speaking'); if (follow) scrollToRow(r);
-    const segs = segsFor(r);
-    if (!segs.length){ speakRow(ep); return; }
-    let i = 0;
-    const playNext = () => {
-      if (ep !== epoch || paused) return;
-      if (i >= segs.length){ speakRow(ep); return; }
-      const s = segs[i++];
-      const u = new SpeechSynthesisUtterance(s.t); u.lang = s.lang;
-      const v = pickVoice(s.lang); if (v) u.voice = v;
-      u.rate = parseFloat(rateSel.value) || 1;
-      u.onend = playNext; u.onerror = playNext;
-      synth.speak(u);
+  /* ---- voice sources (browser native / 豆包 via local /tts proxy) ---- */
+  function makeNative(){
+    return {
+      name: 'native',
+      speak(item, rate){
+        return new Promise(res => {
+          const u = new SpeechSynthesisUtterance(item.t);
+          u.lang = item.lang; const v = pickVoice(item.lang); if (v) u.voice = v;
+          u.rate = rate; u.pitch = 1.04;
+          u.onend = () => res(); u.onerror = () => res();
+          synth.speak(u);
+        });
+      },
+      pause(){ try{ synth.pause(); }catch(e){} },
+      resume(){ try{ synth.resume(); }catch(e){} },
+      stop(){ try{ synth.cancel(); }catch(e){} }
     };
-    playNext();
+  }
+  function makeDoubao(){
+    let active = null;
+    return {
+      name: 'doubao',
+      speak(item, rate){
+        return fetch('/tts', { method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ text: item.t, lang: item.lang, rate: rate }) })
+          .then(r => { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
+          .then(blob => new Promise(res => {
+            const a = new Audio(URL.createObjectURL(blob)); active = a;
+            a.onended = () => { try{ URL.revokeObjectURL(a.src); }catch(e){} active = null; res(); };
+            a.onerror = () => { active = null; res(); };
+            a.play().catch(() => { active = null; res(); });
+          }))
+          .catch(() => { /* config / network failure → just skip this sentence */ });
+      },
+      pause(){ if (active) active.pause(); },
+      resume(){ if (active) active.play().catch(()=>{}); },
+      stop(){ if (active){ active.pause(); active.onended = null; active = null; } }
+    };
+  }
+  function makeEdge(){
+    let active = null;
+    return {
+      name: 'edge',
+      speak(item, rate){
+        return fetch('/tts', { method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ source:'edge', text: item.t, lang: item.lang, rate: rate }) })
+          .then(r => { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
+          .then(blob => new Promise(res => {
+            const a = new Audio(URL.createObjectURL(blob)); active = a;
+            a.onended = () => { try{ URL.revokeObjectURL(a.src); }catch(e){} active = null; res(); };
+            a.onerror = () => { active = null; res(); };
+            a.play().catch(() => { active = null; res(); });
+          }))
+          .catch(() => native.speak(item, rate));  // edge 不可用（未安装/断网）时回退浏览器原生，避免整段静音
+      },
+      pause(){ if (active) active.pause(); },
+      resume(){ if (active) active.play().catch(()=>{}); },
+      stop(){ if (active){ active.pause(); active.onended = null; active = null; } }
+    };
+  }
+  const native = makeNative(), doubao = makeDoubao(), edge = makeEdge();
+  let doubaoReady = false, edgeReady = false;
+  function speaker(){
+    const v = srcSel && srcSel.value;
+    if (v === 'edge' && edgeReady) return edge;
+    if (v === 'doubao' && doubaoReady) return doubao;
+    return native;
+  }
+  if (srcSel){
+    const canUseTtsProxy = location.protocol !== 'file:' && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname || '');
+    if (!canUseTtsProxy){
+      // 离线 / 非本地服务：没有 /tts 代理可用，仅保留浏览器原生朗读（无需任何服务器）
+      ['edge','doubao'].forEach(v => { const o = srcSel.querySelector('option[value="'+v+'"]'); if (o) o.hidden = true; });
+      srcSel.title = '朗读音源（离线可用：浏览器原生）';
+    } else {
+      fetch('/tts/status', { cache:'no-store' }).then(r => r.json()).then(d => {
+        if (d && d.edge){
+          edgeReady = true; const o = srcSel.querySelector('option[value="edge"]'); if (o) o.hidden = false;
+          srcSel.title = '朗读音源（微软语音 · 晓晓 Neural，免费最自然）';
+          if (srcSel.value === 'native') srcSel.value = 'edge';   // 自动选用最自然的中文音色
+        }
+        if (d && d.doubao){
+          doubaoReady = true; const o = srcSel.querySelector('option[value="doubao"]'); if (o) o.hidden = false;
+          if (!edgeReady) srcSel.title = '朗读音源（豆包可用）';
+        }
+      }).catch(() => {});
+    }
+  }
+  function voices(){ return synth.getVoices() || []; }
+  function pickVoice(lang){
+    const vs = voices(); if (!vs.length) return null;
+    const pre = (lang||'zh').split('-')[0].toLowerCase();
+    const same = vs.filter(v => (v.lang||'').toLowerCase().startsWith(pre));
+    if (!same.length) return null;
+    const prefer = pre === 'zh'
+      ? ['neural','google','xiaoxiao','yunxi','yunyang','ting-ting','mei-jia','yaoyao','huihui','kangkang']
+      : ['neural','samantha','google','aria','jenny','zira','guy'];
+    const low = v => (v.name||'').toLowerCase();
+    for (const p of prefer){ const f = same.find(v => low(v).includes(p)); if (f) return f; }
+    return same[0];
+  }
+  function splitSent(t){
+    const raw = String(t).split(/([。！？!?；;])/);
+    const out = []; let buf = '';
+    for (let i=0;i<raw.length;i++){ buf += raw[i]; if (/[。！？!?；;]/.test(raw[i])){ const s = buf.trim(); if (s) out.push(s); buf=''; } }
+    if (buf.trim()) out.push(buf.trim());
+    return out.length ? out : [String(t).trim()].filter(Boolean);
+  }
+  function langOf(t){ return /[一-龥]/.test(t) ? 'zh-CN' : 'en-US'; }
+  /* ---- timecode reading fix (request F) ----
+     Chinese TTS reads "07:20" as "零七点二十"; the user wants "零七分二十秒".
+     We rewrite MM:SS / H:MM:SS to a spoken form before sending to any voice engine.
+     Leading fields are read digit-by-digit (so "07" stays "零七"), the seconds field
+     is read as a proper number ("20" → "二十"). English segments are left untouched. */
+  const DIGIT = '零一二三四五六七八九';
+  function digitsToCn(s){ return String(s).split('').map(c => DIGIT[+c] != null ? DIGIT[+c] : c).join(''); }
+  function num2ToCn(n){ n = +n; if (n < 10) return DIGIT[n]; if (n < 20) return '十' + DIGIT[n % 10];
+    const t = Math.floor(n / 10), o = n % 10; return DIGIT[t] + '十' + (o ? DIGIT[o] : ''); }
+  function zhTimeFix(t){
+    /* ':' or the full-width '：' both mean minutes/seconds, never "点". */
+    return String(t)
+      .replace(/(\d{1,2})[:：](\d{2})[:：](\d{2})/g, (m, a, b, c) => digitsToCn(a) + '时' + digitsToCn(b) + '分' + num2ToCn(c) + '秒')
+      .replace(/(\d{1,2})[:：](\d{2})/g, (m, a, b) => digitsToCn(a) + '分' + num2ToCn(b) + '秒');
+  }
+  const SEL = [
+    '.oneliner',
+    'main section > h2',
+    '#summary .value', '#summary ul.clean li', '#summary .caveat',
+    '#framework .tl .node',
+    '#viewpoints .vcard',
+    '#quotes blockquote',
+    '#conflicts .cf',
+    '#hotspots .hs',
+    '#comments .ci > div',
+    '#resources ul.res li', '#glossary ul.res li',
+    '#tr .row'
+  ].join(',');
+  function segmentsFor(el, mode){
+    const zhEl = el.querySelector ? el.querySelector('.zh') : null;
+    const enEl = el.querySelector ? el.querySelector('.en') : null;
+    const zhRaw = (zhEl ? zhEl.textContent : el.textContent).trim();
+    const zh = langOf(zhRaw) === 'zh-CN' ? zhTimeFix(zhRaw) : zhRaw;
+    const en = enEl ? enEl.textContent.trim() : '';
+    const segs = [];
+    if (mode === 'en'){
+      if (en) segs.push({t:en, lang:'en-US'});
+      else if (zh && langOf(zh) === 'en-US') segs.push({t:zh, lang:'en-US'});
+    } else if (mode === 'bi'){
+      if (zh) segs.push({t:zh, lang: langOf(zh)});
+      if (en) segs.push({t:en, lang:'en-US'});
+    } else {
+      if (zh) segs.push({t:zh, lang: langOf(zh)});
+    }
+    const out = [];
+    for (const s of segs) for (const piece of splitSent(s.t)) out.push({t:piece, lang:s.lang});
+    return out;
+  }
+  let queue = [], qi = 0, paused = false, speaking = false, epoch = 0, lastHi = null;
+  function clearHi(){ document.querySelectorAll('.speaking').forEach(e => e.classList.remove('speaking')); lastHi = null; }
+  function highlight(el){ if (el === lastHi) return; lastHi = el; clearHi(); if (el){ el.classList.add('speaking'); el.scrollIntoView({block:'center', behavior:'smooth'}); } }
+  async function speakCurrent(ep){
+    if (ep !== epoch || paused) return;
+    if (qi >= queue.length){ finish(); return; }
+    const cur = queue[qi];
+    highlight(cur.el);
+    await speaker().speak(cur, (rateSel ? parseFloat(rateSel.value) || 1 : 1));
+    if (ep !== epoch || paused) return;
+    qi++; setTimeout(() => speakCurrent(ep), 110);
+  }
+  function buildQueue(){
+    const mode = langSel ? langSel.value : 'zh';
+    const items = [].slice.call(document.querySelectorAll(SEL)).filter(el => segmentsFor(el, mode).length);
+    const q = [];
+    for (const el of items) for (const s of segmentsFor(el, mode)) q.push({el:el, t:s.t, lang:s.lang});
+    return q;
   }
   function start(){
-    if (speaking && paused){ synth.resume(); paused = false; ttsBtn.textContent = '暂停'; return; }
-    epoch++; speaking = true; paused = false; ttsBtn.textContent = '暂停';
-    synth.cancel(); clearHi(); idx = -1; speakRow(epoch);
+    queue = buildQueue(); qi = 0;
+    if (!queue.length) return;
+    if (speaking && paused){ speaker().resume(); paused = false; setLabel('暂停'); return; }
+    epoch++; speaking = true; paused = false; btn.classList.add('on'); setLabel('暂停');
+    try{ synth.cancel(); }catch(e){}
+    speakCurrent(epoch);
   }
-  function pause(){ if (!speaking) return; paused = true; synth.pause(); ttsBtn.textContent = '继续'; }
-  function finish(){ epoch++; speaking = false; paused = false; idx = -1; synth.cancel(); ttsBtn.textContent = '朗读'; clearHi(); }
-  ttsBtn.addEventListener('click', () => { if (speaking && !paused) pause(); else start(); });
-  if (stopBtn) stopBtn.addEventListener('click', finish);
+  function pause(){ if (!speaking) return; paused = true; speaker().pause(); setLabel('继续'); }
+  function finish(){ epoch++; speaking = false; paused = false; try{ speaker().stop(); }catch(e){} clearHi(); btn.classList.remove('on'); setLabel('朗读全文'); }
+  function setLabel(t){ const l = btn.querySelector('.lbl'); if (l) l.textContent = t; }
+  btn.addEventListener('click', () => { if (speaking && !paused) pause(); else start(); });
   if (langSel) langSel.addEventListener('change', () => { if (speaking){ const wasPaused = paused; finish(); if (!wasPaused) start(); } });
-  /* Chrome truncates long single utterances; a light heartbeat keeps the queue alive */
-  setInterval(() => { if (speaking && !paused && synth.speaking && !synth.paused) { try { synth.resume(); } catch(e){} } }, 5000);
+  if (srcSel) srcSel.addEventListener('change', () => { if (speaking){ const wasPaused = paused; finish(); if (!wasPaused) start(); } });
+  /* ---- double-click any block → read from that block onward (request H) ---- */
+  function startFrom(el){
+    const mode = langSel ? langSel.value : 'zh';
+    const all = [].slice.call(document.querySelectorAll(SEL));
+    const idx = all.indexOf(el);
+    if (idx < 0) return;
+    const q = [];
+    for (let i = idx; i < all.length; i++) for (const s of segmentsFor(all[i], mode)) q.push({el: all[i], t: s.t, lang: s.lang});
+    queue = q; qi = 0;
+    if (!queue.length) return;
+    if (speaking && paused){ speaker().resume(); paused = false; setLabel('暂停'); return; }
+    epoch++; speaking = true; paused = false; btn.classList.add('on'); setLabel('暂停');
+    try{ synth.cancel(); }catch(e){}
+    speakCurrent(epoch);
+  }
+  if (typeof main !== 'undefined' && main) main.addEventListener('dblclick', e => {
+    const el = e.target.closest(SEL);
+    if (!el) return;
+    startFrom(el);
+  });
+  setInterval(() => { if (speaking && !paused && synth.speaking && !synth.paused){ try { synth.resume(); } catch(e){} } }, 5000);
 })();
 })();
 </script>

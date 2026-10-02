@@ -4,6 +4,7 @@ work/
 # credentials — never commit
 cookies*.txt
 *.cookies
+tts_config.json
 # build / python
 dist/
 __pycache__/

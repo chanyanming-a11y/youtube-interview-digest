@@ -29,6 +29,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from transcript_utils import parse_json3, parse_vtt, write_workdir, fmt_ts  # noqa: E402
 import page_fallback  # noqa: E402
+import fetch_transcript_browser as ftb  # noqa: E402
 
 try:
     import yt_dlp
@@ -138,6 +139,8 @@ def main():
     ap.add_argument("--cookies-from-browser", default=None, help="chrome / safari / edge / firefox")
     ap.add_argument("--cookies", default=None, help="Netscape cookies.txt exported from a logged-in browser")
     ap.add_argument("--proxy", default=None)
+    ap.add_argument("--no-browser", action="store_true",
+                    help="skip the automatic browser 'Show transcript' export")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     prefer = [x.strip() for x in args.lang.split(",") if x.strip()]
@@ -167,7 +170,9 @@ def main():
             info = ydl.extract_info(args.url, download=False)
         except yt_dlp.utils.DownloadError as e:
             msg = re.sub(r"\x1b\[[0-9;]*m", "", str(e))
-            if not any(k in msg for k in ("not a bot", "Sign in to confirm", "cookies", "429")):
+            if not any(k in msg for k in ("not a bot", "Sign in to confirm", "cookies", "429",
+                                          "needs to be reloaded", "reloaded", "Failed to extract",
+                                          "confirm you", "unavailable", "This video is unavailable")):
                 print(json.dumps({"error": "EXTRACT_FAILED", "message": msg[:300],
                                   "next": "Check URL / network / proxy"}, ensure_ascii=False, indent=1))
                 sys.exit(2)
@@ -225,6 +230,22 @@ def main():
         if segs:
             src = ext_info["source"]
 
+    # automatic browser export of YouTube's built-in "Show transcript" — runs
+    # whenever no transcript was obtained by any previous method, BEFORE falling
+    # back to asking the user to paste it by hand.
+    if not segs and not args.no_browser:
+        log("→ trying automatic browser transcript export (YouTube 'Show transcript') ...")
+        try:
+            bsegs, bsrc = ftb.run(vid, args.out, cookies_file=args.cookies,
+                                 browser_name=args.cookies_from_browser or "chrome",
+                                 proxy=args.proxy, log=log)
+            if bsegs:
+                segs, src = bsegs, bsrc
+        except ImportError:
+            log("  ! playwright not installed — skipping (install: <venv>/bin/pip install playwright)")
+        except Exception as e:  # noqa: BLE001
+            log(f"  ! browser transcript export failed: {e}")
+
     for c in meta.get("chapters", []):
         c["ts"] = fmt_ts(c.get("start") or 0)
     meta["duration_text"] = fmt_ts(duration)
@@ -255,8 +276,11 @@ def main():
         stats.update(write_workdir(args.out, segs, vid))
     else:
         stats["transcript"] = "MISSING"
-        stats["next"] = NEXT_BOT if mode == "page-fallback" else \
-            "No captions. Ask user for a transcript file, then run transcript_utils.py --file ... --out <same dir>"
+        stats["next"] = (NEXT_BOT if mode == "page-fallback" else
+            ("Automatic browser 'Show transcript' export was attempted but failed. "
+             "Re-run with --cookies cookies.txt, or paste the transcript and run "
+             "transcript_utils.py --file <f> --out <same dir> (meta/heatmap/comments are kept).")) + LOCAL_HINT
+        log("! transcript missing — " + LOCAL_HINT.splitlines()[0])
     if warnings:
         stats["warnings"] = warnings
     print(json.dumps(stats, ensure_ascii=False, indent=1))
@@ -264,9 +288,21 @@ def main():
         sys.exit(4)
 
 
-NEXT_BOT = ("Transcript blocked by YouTube bot-check. Ask the user for consent, then re-run with "
-            "--cookies-from-browser chrome (macOS Keychain prompt) or --cookies cookies.txt; or ask for a "
-            "transcript file and run transcript_utils.py --file <f> --out <same dir> (meta/heatmap/comments are kept).")
+NEXT_BOT = ("Automatic browser 'Show transcript' export was attempted but could not retrieve it. "
+            "Try one of: (1) re-run with --cookies cookies.txt (export once from a logged-in browser: "
+            "Chrome menu → Settings → ... → export, or `yt-dlp --cookies-from-browser chrome -o cookies.txt URL`); "
+            "or (2) paste the transcript from YouTube '… → Show transcript' and run "
+            "transcript_utils.py --file <f> --out <same dir> (meta/heatmap/comments are kept).")
+
+# Appended to `next` when the transcript could not be fetched because the running
+# environment's egress IP is blocked by YouTube (common with cloud/sandbox agents).
+# The fix is to run local_fetch.sh on the user's OWN machine (normal IP + logged-in
+# Chrome), which fetches the transcript in one shot; then hand the folder back.
+LOCAL_HINT = ("\n\nIf this ran inside an agent/sandbox whose egress IP is blocked by YouTube "
+              "('RequestBlocked' / 'page needs to be reloaded'), DON'T retry here — run "
+              "local_fetch.sh on your OWN machine instead: it uses your local logged-in Chrome "
+              "and a normal IP, so it fetches the transcript in one shot. Then hand the output "
+              "folder back to the agent to continue (translate / deconstruct / render).")
 
 
 def extract_video_id(url):

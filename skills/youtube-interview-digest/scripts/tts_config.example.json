@@ -1,0 +1,11 @@
+{
+  "_note": "把本文件复制为同目录下的 tts_config.json，并填入你在火山引擎「语音合成」控制台拿到的 appid / token。tts_config.json 含密钥，请勿提交、分享或截图外传。豆包音色默认 zh_female_doubao / zh_male_doubao；英文可留空（用中文音色读英文）。",
+  "appid": "YOUR_APP_ID",
+  "token": "YOUR_TOKEN",
+  "cluster": "volcano_tts",
+  "endpoint": "https://openspeech.bytedance.com/api/v1/tts",
+  "auth_header_template": "Bearer; {token}",
+  "voice_zh": "zh_female_doubao",
+  "voice_en": "zh_female_doubao",
+  "encoding": "mp3"
+}

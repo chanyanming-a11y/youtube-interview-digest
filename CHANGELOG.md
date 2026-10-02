@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.2.1 — 2026-10-02
+
+服务端 TTS 音源、自动浏览器导出字幕、本机一键抓取（无功能/数据回归，skill 子目录整体更新）。
+
+- 云端 TTS 音源与本地代理：新增 `scripts/serve_report.py`，支持微软 Edge 晓晓 Neural（免费最自然）与豆包（火山引擎）服务端合成；密钥仅经本地 `/tts` 代理、不进报告 HTML / 仓库；朗读音源按可用度自动优选「Edge 晓晓 → 豆包 → 浏览器原生」
+- 自动浏览器导出字幕：新增 `scripts/fetch_transcript_browser.py`，Playwright 驱动本机已登录 Chrome 点开「显示文字记录」抽取自带时间戳文字稿，补全多层字幕兜底链路（yt-dlp → 页面降级 → 外部转写 → 浏览器导出 → 粘贴）
+- 本机一键抓取：新增 `local_fetch.sh`，在本地正常 IP + 已登录 Chrome 一次性抓取全部数据，专用于绕过云沙箱出口 IP 被 YouTube 风控（仅「抓取」需联网，翻译/解构/渲染在 agent 内）
+- 配置样例：新增 `scripts/tts_config.example.json`（豆包 appid/token 占位，切勿提交真实密钥）
+- 安全：根 `.gitignore` 增加 `tts_config.json`，避免真实 TTS 密钥误提交
+
 ## v1.2.0 — 2026-10-01
 
 报告页新增浏览器原生语音朗读（零依赖、离线可用）。

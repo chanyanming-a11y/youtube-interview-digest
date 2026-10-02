@@ -1,3 +1,15 @@
-# Pinned for reproducible installs. Bump after testing on your environment.
-yt-dlp==2025.1.1
-youtube-transcript-api==1.0.0
+# ---- Core dependencies (required) ----
+# yt-dlp is a fast-moving target — YouTube changes often, so we only set a floor
+# and recommend `pip install -U yt-dlp` to stay current (old yt-dlp breaks easily).
+yt-dlp>=2025.1.1
+# Pinned below 2.0 on purpose: the transcript fallback in fetch_youtube.py uses the
+# 1.x API (YouTubeTranscriptApi.list / find_manually_created_transcript); 2.x renamed
+# it to .fetch() and would break the fallback.
+youtube-transcript-api>=1.0.0,<2.0.0
+
+# ---- Optional dependencies (NOT required for the core pipeline) ----
+# edge-tts : free, no-key Microsoft online TTS (Xiaoxiao Neural). Enables the
+#            "微软语音" read-aloud source.  pip install edge-tts
+# playwright: only needed for the automatic browser "Show transcript" export when
+#            yt-dlp is bot-checked.            pip install playwright
+
