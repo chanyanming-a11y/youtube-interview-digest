@@ -1,0 +1,78 @@
+name: Backfill legacy release notes (one-shot)
+
+# TEMPORARY. This file lives only on the `chore/backfill-release-notes` branch and
+# disappears with it — it is never merged into main.
+#
+# Why it is needed at all:
+#   A `push: tags` run uses the workflow file *from the tag's commit*. The tags
+#   v1.1.3–v1.2.2 point at commits that still carry the old greedy `\b.*\n`
+#   extractor, so every attempt to re-push those tags re-ran the bug and rewrote
+#   the Release body as a bare newline — the run even reported success, because
+#   the old script had no "empty body" guard.
+#
+#   `workflow_dispatch` on main would use the fixed extractor, but starting it
+#   needs UI/API access. A push to *this branch* uses the workflow file from this
+#   branch (main + this file), i.e. exactly the fixed logic — so the repair is
+#   reproducible from the command line without touching main or any tag.
+on:
+  push:
+    branches: ["chore/backfill-release-notes"]
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Extract notes for each legacy tag from CHANGELOG.md
+        run: |
+          cat > /tmp/extract.py <<'PY'
+          import re, sys
+          tag = sys.argv[1]
+          ver = tag[1:] if tag.startswith("v") else tag
+          text = open("CHANGELOG.md", encoding="utf-8").read()
+          pat = re.compile(
+              r"^##\s+v?" + re.escape(ver) + r"\b[^\n]*\n(.*?)(?=^##\s|\Z)",
+              re.M | re.S,
+          )
+          m = pat.search(text)
+          if not m:
+              raise SystemExit(f"no CHANGELOG.md section found for {tag}")
+          body = m.group(1).strip()
+          if not body:
+              raise SystemExit(f"CHANGELOG.md section for {tag} is empty")
+          with open(f"/tmp/notes-{tag}.md", "w", encoding="utf-8") as f:
+              f.write(body + "\n")
+          print(f"  {tag}: {len(body)} chars")
+          PY
+          for t in v1.2.2 v1.2.1 v1.2.0 v1.1.4 v1.1.3; do
+            python3 /tmp/extract.py "$t"
+          done
+
+      - name: Write notes back to each existing Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # No --latest: the Latest badge must stay on v1.2.4.
+          for t in v1.2.2 v1.2.1 v1.2.0 v1.1.4 v1.1.3; do
+            gh release edit "$t" --title "$t" --notes-file "/tmp/notes-$t.md"
+            echo "  ✓ notes written for $t"
+          done
+
+      - name: Verify every body is non-empty
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list --limit 12
+          for t in v1.2.2 v1.2.1 v1.2.0 v1.1.4 v1.1.3; do
+            n=$(gh release view "$t" --json body -q '.body | length')
+            echo "  $t body length = $n"
+            if [ "$n" -lt 50 ]; then
+              echo "::error::$t body is still too short ($n chars)"
+              exit 1
+            fi
+          done
+          echo "all five legacy releases now carry real notes"
