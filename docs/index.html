@@ -12,8 +12,9 @@ body{margin:0;background:linear-gradient(160deg,#211e54,#0d0e1c);color:var(--tex
 header{text-align:center;padding:24px 0 8px}
 .kicker{color:var(--muted);letter-spacing:.18em;font-size:13px;text-transform:uppercase}
 h1{font-size:46px;margin:8px 0 4px}
+h2{font-size:22px;margin-top:0}
 .sub{color:var(--indigo);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px}
-.tag{font-size:18px;color:var(--text);max-width:720px;margin:18px auto 0}
+.tag{color:var(--text);max-width:760px;margin:18px auto 0}
 .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:28px 0}
 .btn{padding:11px 20px;border-radius:24px;text-decoration:none;font-weight:600;font-size:15px;border:2px solid transparent}
 .btn.primary{background:var(--accent);color:#1a0d0d}
@@ -21,12 +22,22 @@ h1{font-size:46px;margin:8px 0 4px}
 .chips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0 4px}
 .chip{border:1px solid rgba(248,113,113,.4);border-radius:18px;padding:6px 14px;font-size:14px;color:var(--text)}
 .section{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:22px 24px;margin:28px 0}
-.section h2{margin-top:0;font-size:22px}
 pre{background:#0d0e1c;border-radius:10px;padding:14px 16px;overflow:auto;font-size:13px;color:#cbd5e1}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 iframe{width:100%;height:820px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:#0d0e1c}
 .note{color:var(--muted);font-size:13px}
 footer{text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
+a{color:var(--indigo);text-decoration:none}
+a:hover{text-decoration:underline}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+.feat{background:#0d0e1c;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:16px 18px}
+.feat h3{margin:0 0 6px;font-size:16px}
+.feat p{margin:0;font-size:14px;color:var(--muted)}
+.feat .tagmini{display:inline-block;margin-top:8px;font-size:12px;color:var(--accent);border:1px solid rgba(248,113,113,.35);border-radius:14px;padding:2px 10px}
+.callout{border:1px solid rgba(129,140,248,.4);border-radius:14px;padding:18px 20px;background:#161833}
+.callout h3{margin:0 0 6px;font-size:18px;color:var(--indigo)}
+.badge{display:inline-block;font-size:12px;border-radius:12px;padding:3px 10px;background:rgba(129,140,248,.18);color:var(--indigo);margin-left:6px}
+@media (max-width:680px){.grid{grid-template-columns:1fr}h1{font-size:34px}}
 </style>
 </head>
 <body>
@@ -35,11 +46,13 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
     <div class="kicker">Agent Skill · YouTube 访谈精读</div>
     <h1>油管访谈精读</h1>
     <div class="sub">youtube-interview-digest</div>
-    <p class="tag">长访谈高效导读：框架与主线先行，借评论区发现价值点与亮点，再拓展读透全篇。</p>
+    <p class="tag">长访谈高效导读：框架与主线先行，借评论区发现价值点与亮点，再拓展读透全篇。v1.2.4 起，任何能加载 <code>SKILL.md</code> 的 agent 都能装。</p>
     <div class="chips">
       <span class="chip">1 小时访谈 → 10 分钟读完</span>
       <span class="chip">时间戳一键跳回原视频</span>
       <span class="chip">金句逐字原文校验</span>
+      <span class="chip">三音源全文朗读</span>
+      <span class="chip">本机一键抓取</span>
     </div>
     <div class="cta">
       <a class="btn primary" href="example-report.html" target="_blank">▶ 看真实成品报告</a>
@@ -49,17 +62,65 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
 
   <div class="section">
     <h2>现场成品（Lenny's Podcast × Elizabeth Stone 示例）</h2>
-    <p class="note">下方为完整报告内嵌预览，点击任意时间码即可跳回原视频；也可 <a href="example-report.html" target="_blank">新标签页打开</a>。</p>
+    <p class="note">下方为完整报告内嵌预览，点击任意时间码即可跳回原视频；也可 <a href="example-report.html" target="_blank">新标签页打开</a>。这是用本 skill 真实跑出来的成品，证明流水线可用。</p>
     <iframe src="example-report.html" title="示例精读报告" loading="lazy"></iframe>
   </div>
 
   <div class="section">
-    <h2>安装</h2>
+    <h2>能力亮点（v1.2.0 → v1.2.4）</h2>
+    <div class="grid">
+      <div class="feat">
+        <h3>可点击时间戳 + 无干扰护盾</h3>
+        <p>每个时间码一点即 seek；播放器上盖一层常驻透明护盾，吞掉指针事件，YouTube 不再弹出标题栏与「更多视频」推荐，暂停/结束显形为封面。</p>
+      </div>
+      <div class="feat">
+        <h3>全文朗读 · 三音源自动优选</h3>
+        <p>逐块朗读全部栏目，当前段高亮并自动滚动，双击正文即从该处起读。音源按可用度优选：Edge 晓晓 Neural（免费最自然）→ 豆包（需密钥）→ 浏览器原生（离线兜底）。</p>
+        <span class="tagmini">中文时间戳按「分/秒」读法</span>
+      </div>
+      <div class="feat">
+        <h3>本机一键抓取</h3>
+        <p>云 IP（沙箱/机房）会被 YouTube 整体封锁字幕接口。<code>local_fetch.sh</code> 用你本机正常 IP + 已登录 Chrome 一次抓全 meta / 热度 / 评论 / 字幕，再发回 agent 做翻译解构。</p>
+      </div>
+      <div class="feat">
+        <h3>自动浏览器导出字幕</h3>
+        <p>被风控时，<code>fetch_transcript_browser.py</code> 用 Playwright 驱动本机已登录 Chrome 点开「显示文字记录」，抽取自带时间戳的文字稿，补全多层兜底链路。</p>
+      </div>
+      <div class="feat">
+        <h3>离线单文件分享</h3>
+        <p><code>report.html</code> 自包含（CSS/JS/数据全内联），直接发给别人即可；<code>file://</code> 打开自动降级为封面 + 本地预览链接，朗读降级为浏览器原生音源。</p>
+      </div>
+      <div class="feat">
+        <h3>安全加固（v1.2.3）</h3>
+        <p>本地 TTS 代理加同源校验（只放行 127.0.0.1/localhost/::1，防跨域白烧付费额度）；外部转写加 DNS 解析 + 重定向二次校验，堵住 SSRF 两条绕过路径。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="callout">
+      <h3>也支持这类长访谈 <span class="badge">可直接生成</span></h3>
+      <p style="margin:0;color:var(--text)">
+        <strong>Richard Socher × Latent Space</strong> —《Recursive Self-Improvement: from Auto Research to Superintelligence》（93 分钟 · 14.9 万播放 · 2026-09-14）。<br>
+        话题覆盖递归自我改进、Eureka Machine、超级智能、AI 安全与奖励黑客、Anthropic 宪法、开放源代码 AI、递归自我改进公司 Recursive 的早期成果等。
+      </p>
+      <p class="note" style="margin-top:12px">
+        云 IP 环境（如本沙箱）会被 YouTube 整体封锁字幕接口，所以「抓取」这一步必须在你本机跑——其余翻译/解构/渲染仍在 agent 内：
+      </p>
+      <pre><code># 在你本机（正常 IP + 已登录 Chrome）一键抓全，把目录发回 agent 即可
+./skills/youtube-interview-digest/local_fetch.sh "https://www.youtube.com/watch?v=eDFXtSg3zB8"</code></pre>
+      <p class="note">只有「抓取」需要联网；翻译、信号分析、解构、渲染都不需要。完整流程见 <a href="https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/docs/captions.md" target="_blank">抓不到字幕怎么办</a>。</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>安装（去平台化）</h2>
+    <p class="note"><code>install.sh</code> 不再绑定某个具体 agent：按「<code>$1</code> → <code>$SKILLS_DIR</code> → 自动探测 <code>$HOME/.*/skills</code>（多候选取排序第一个）→ <code>~/.agent-skills</code>」的顺序解析，安装前会打印实际落点。任何加载 <code>SKILL.md</code> 的 agent 都能对号入座。</p>
     <pre><code>git clone https://github.com/chanyanming-a11y/youtube-interview-digest.git
 cd youtube-interview-digest
 ./install.sh                     # 自动探测你的 agent skills 目录并安装
 ./install.sh ~/.my-agent/skills  # 或显式指定任意支持 SKILL.md 的 agent 目录</code></pre>
-    <p class="note">依赖：Python ≥ 3.10，以及 <code>pip install -r skills/youtube-interview-digest/requirements.txt</code>（yt-dlp, youtube-transcript-api）。</p>
+    <p class="note">依赖：Python ≥ 3.10，以及 <code>pip install -r skills/youtube-interview-digest/requirements.txt</code>（yt-dlp, youtube-transcript-api）。全文朗读最自然的音源需 <code>pip install edge-tts</code>（免费、零密钥）。</p>
   </div>
 
   <div class="section">
@@ -75,11 +136,14 @@ cd youtube-interview-digest
       <a href="https://github.com/chanyanming-a11y/youtube-interview-digest#readme" target="_blank">README</a> ·
       <a href="https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/docs/report-page.md" target="_blank">报告页的交互</a> ·
       <a href="https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/docs/captions.md" target="_blank">抓不到字幕怎么办</a> ·
-      <a href="https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/docs/case-study.md" target="_blank">案例解读</a>
+      <a href="https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/docs/case-study.md" target="_blank">案例解读</a> ·
+      <a href="https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/PRIVACY.md" target="_blank">隐私</a> ·
+      <a href="https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/SECURITY.md" target="_blank">安全</a> ·
+      <a href="https://github.com/chanyanming-a11y/youtube-interview-digest/blob/main/CHANGELOG.md" target="_blank">更新记录</a>
     </p>
   </div>
 
-  <footer>MIT License · 用于个人学习与研究的油管访谈精读 skill</footer>
+  <footer>MIT License · 用于个人学习与研究的油管访谈精读 skill · v1.2.4</footer>
 </div>
 </body>
 </html>
