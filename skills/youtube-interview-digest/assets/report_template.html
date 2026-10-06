@@ -774,22 +774,41 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
   }
   if (srcSel){
     const canUseTtsProxy = location.protocol !== 'file:' && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname || '');
+    function ttsHint(msg){
+      const bar = srcSel.closest('.readbar');
+      if (!bar || bar.querySelector('.ttsHint')) return;
+      const tip = document.createElement('div');
+      tip.className = 'ttsHint';
+      tip.style.cssText = 'margin-top:8px;padding:8px 10px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-bg);color:var(--accent);font-size:12px;line-height:1.6';
+      tip.innerHTML = msg;
+      bar.parentNode.insertBefore(tip, bar.nextSibling);
+    }
     if (!canUseTtsProxy){
       // 离线 / 非本地服务：没有 /tts 代理可用，仅保留浏览器原生朗读（无需任何服务器）
       ['edge','doubao'].forEach(v => { const o = srcSel.querySelector('option[value="'+v+'"]'); if (o) o.hidden = true; });
       srcSel.title = '朗读音源（离线可用：浏览器原生）';
+      ttsHint('💡 <b>微软语音 / 豆包需经本机本地服务打开</b>才能启用。请用已装 edge-tts 的 Python 运行：'
+        + '<br><code>python3 serve_report.py --work &lt;报告目录&gt; --open</code><br>'
+        + '再打开它输出的 <b>http://127.0.0.1:端口/report.html</b>，即自动首选微软晓晓 Neural。');
     } else {
       fetch('/tts/status', { cache:'no-store' }).then(r => r.json()).then(d => {
         if (d && d.edge){
           edgeReady = true; const o = srcSel.querySelector('option[value="edge"]'); if (o) o.hidden = false;
           srcSel.title = '朗读音源（微软语音 · 晓晓 Neural，免费最自然）';
           if (srcSel.value === 'native') srcSel.value = 'edge';   // 自动选用最自然的中文音色
+        } else {
+          const why = (d && d.edge_reason) ? ('<br>' + d.edge_reason.replace(/</g, '&lt;')) : '';
+          ttsHint('💡 <b>本地服务已连接，但微软语音未启用</b>：运行该服务的 Python 缺少 edge-tts。'
+            + ' 请在该 Python 下执行 <code>pip install edge-tts</code> 后重开服务。' + why);
         }
         if (d && d.doubao){
           doubaoReady = true; const o = srcSel.querySelector('option[value="doubao"]'); if (o) o.hidden = false;
           if (!edgeReady) srcSel.title = '朗读音源（豆包可用）';
         }
-      }).catch(() => {});
+      }).catch(() => {
+        ttsHint('💡 <b>无法连接本地语音服务（/tts/status）</b>。请确认已用 <code>python3 serve_report.py</code> 启动服务，'
+          + '并通过它输出的 localhost 链接打开本报告。');
+      });
     }
   }
   function voices(){ return synth.getVoices() || []; }
