@@ -697,7 +697,12 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
     [btn, langSel, rateSel, srcSel].forEach(el => el && el.remove());
     return;
   }
-  /* ---- voice sources (browser native / 豆包 via local /tts proxy) ---- */
+  /* shared audio lifecycle: edge/doubao HTMLAudioElement is NOT tracked by speechSynthesis */
+  let audio = null;                 // currently playing <audio> for edge/doubao
+  let edgeDead = false, doubaoDead = false;   // runtime source failure flags → degrade whole session, not per sentence
+  function killAudio(){ if (audio){ try{ audio.pause(); audio.onended = null; audio.onerror = null; }catch(e){} audio = null; } }
+  function srcTip(name){ const bar = btn.closest('.readbar'); if (bar && !bar.querySelector('.tip')) bar.insertAdjacentHTML('beforeend', '<span class="tip" style="align-self:center">'+name+'暂不可用，已切换为浏览器朗读</span>'); }
+  /* ---- voice sources (browser native / 豆包 / 微软 Edge via local /tts proxy) ---- */
   function makeNative(){
     return {
       name: 'native',
@@ -716,7 +721,6 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
     };
   }
   function makeDoubao(){
-    let active = null;
     return {
       name: 'doubao',
       speak(item, rate){
@@ -724,20 +728,20 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
                     body: JSON.stringify({ text: item.t, lang: item.lang, rate: rate }) })
           .then(r => { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
           .then(blob => new Promise(res => {
-            const a = new Audio(URL.createObjectURL(blob)); active = a;
-            a.onended = () => { try{ URL.revokeObjectURL(a.src); }catch(e){} active = null; res(); };
-            a.onerror = () => { active = null; res(); };
-            a.play().catch(() => { active = null; res(); });
+            const a = new Audio(URL.createObjectURL(blob)); audio = a;
+            const done = () => { try{ URL.revokeObjectURL(a.src); }catch(e){} if (audio === a) audio = null; res(); };
+            a.onended = done; a.onerror = () => { done(); };
+            if (paused) return;                       // do not auto-play while paused; resume() will play it
+            a.play().catch(() => { done(); });
           }))
-          .catch(() => { /* config / network failure → just skip this sentence */ });
+          .catch(() => { doubaoDead = true; srcTip('豆包'); return native.speak(item, rate); });
       },
-      pause(){ if (active) active.pause(); },
-      resume(){ if (active) active.play().catch(()=>{}); },
-      stop(){ if (active){ active.pause(); active.onended = null; active = null; } }
+      pause(){ if (audio) try{ audio.pause(); }catch(e){} },
+      resume(){ if (audio) audio.play().catch(()=>{}); },
+      stop(){ killAudio(); }
     };
   }
   function makeEdge(){
-    let active = null;
     return {
       name: 'edge',
       speak(item, rate){
@@ -745,24 +749,25 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
                     body: JSON.stringify({ source:'edge', text: item.t, lang: item.lang, rate: rate }) })
           .then(r => { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
           .then(blob => new Promise(res => {
-            const a = new Audio(URL.createObjectURL(blob)); active = a;
-            a.onended = () => { try{ URL.revokeObjectURL(a.src); }catch(e){} active = null; res(); };
-            a.onerror = () => { active = null; res(); };
-            a.play().catch(() => { active = null; res(); });
+            const a = new Audio(URL.createObjectURL(blob)); audio = a;
+            const done = () => { try{ URL.revokeObjectURL(a.src); }catch(e){} if (audio === a) audio = null; res(); };
+            a.onended = done; a.onerror = () => { done(); };
+            if (paused) return;                       // do not auto-play while paused; resume() will play it
+            a.play().catch(() => { done(); });
           }))
-          .catch(() => native.speak(item, rate));  // edge 不可用（未安装/断网）时回退浏览器原生，避免整段静音
+          .catch(() => { edgeDead = true; srcTip('微软语音'); return native.speak(item, rate); });  // 整段降级到浏览器原生，而非单句跳变
       },
-      pause(){ if (active) active.pause(); },
-      resume(){ if (active) active.play().catch(()=>{}); },
-      stop(){ if (active){ active.pause(); active.onended = null; active = null; } }
+      pause(){ if (audio) try{ audio.pause(); }catch(e){} },
+      resume(){ if (audio) audio.play().catch(()=>{}); },
+      stop(){ killAudio(); }
     };
   }
   const native = makeNative(), doubao = makeDoubao(), edge = makeEdge();
   let doubaoReady = false, edgeReady = false;
   function speaker(){
     const v = srcSel && srcSel.value;
-    if (v === 'edge' && edgeReady) return edge;
-    if (v === 'doubao' && doubaoReady) return doubao;
+    if (v === 'edge' && edgeReady && !edgeDead) return edge;
+    if (v === 'doubao' && doubaoReady && !doubaoDead) return doubao;
     return native;
   }
   if (srcSel){
@@ -874,15 +879,22 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
     return q;
   }
   function start(){
+    if (speaking && paused){                       // resume a paused read
+      paused = false; setLabel('暂停');
+      const s = speaker();
+      if (s === native){ try{ synth.resume(); }catch(e){} }
+      else if (audio){ audio.play().catch(()=>{}); }   // audio exists → resume it
+      return;                                      // (if fetch still pending, it auto-plays once paused=false)
+    }
+    killAudio();                                   // stop any in-flight audio from a previous session (fix overlap)
     queue = buildQueue(); qi = 0;
     if (!queue.length) return;
-    if (speaking && paused){ speaker().resume(); paused = false; setLabel('暂停'); return; }
     epoch++; speaking = true; paused = false; btn.classList.add('on'); setLabel('暂停');
     try{ synth.cancel(); }catch(e){}
     speakCurrent(epoch);
   }
-  function pause(){ if (!speaking) return; paused = true; speaker().pause(); setLabel('继续'); }
-  function finish(){ epoch++; speaking = false; paused = false; try{ speaker().stop(); }catch(e){} clearHi(); btn.classList.remove('on'); setLabel('朗读全文'); }
+  function pause(){ if (!speaking) return; paused = true; setLabel('继续'); const s = speaker(); if (s === native){ try{ synth.pause(); }catch(e){} } else if (audio){ try{ audio.pause(); }catch(e){} } }
+  function finish(){ epoch++; speaking = false; paused = false; killAudio(); try{ synth.cancel(); }catch(e){} clearHi(); btn.classList.remove('on'); setLabel('朗读全文'); }
   function setLabel(t){ const l = btn.querySelector('.lbl'); if (l) l.textContent = t; }
   btn.addEventListener('click', () => { if (speaking && !paused) pause(); else start(); });
   if (langSel) langSel.addEventListener('change', () => { if (speaking){ const wasPaused = paused; finish(); if (!wasPaused) start(); } });
@@ -893,11 +905,10 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
     const all = [].slice.call(document.querySelectorAll(SEL));
     const idx = all.indexOf(el);
     if (idx < 0) return;
-    const q = [];
-    for (let i = idx; i < all.length; i++) for (const s of segmentsFor(all[i], mode)) q.push({el: all[i], t: s.t, lang: s.lang});
-    queue = q; qi = 0;
+    killAudio();                                   // stop the current read so double-click never overlaps (fix bug③)
+    queue = []; qi = 0;
+    for (let i = idx; i < all.length; i++) for (const s of segmentsFor(all[i], mode)) queue.push({el: all[i], t: s.t, lang: s.lang});
     if (!queue.length) return;
-    if (speaking && paused){ speaker().resume(); paused = false; setLabel('暂停'); return; }
     epoch++; speaking = true; paused = false; btn.classList.add('on'); setLabel('暂停');
     try{ synth.cancel(); }catch(e){}
     speakCurrent(epoch);
