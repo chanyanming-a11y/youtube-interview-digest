@@ -162,6 +162,7 @@ def main():
 
     log = lambda m: print(m, file=sys.stderr)  # noqa: E731
     vid_guess = extract_video_id(args.url)
+    platform = detect_platform(args.url, None)
     tail = "" if args.no_comments else f" + up to {args.max_comments} comments"
     print(f"→ [yt-dlp] extracting metadata{tail} ...", file=sys.stderr)
     mode, info, segs, src, ext_info, bot_msg = "yt-dlp", None, None, None, None, None
@@ -184,14 +185,14 @@ def main():
                 segs, ext = download_subs(ydl, formats)
                 if segs:
                     src = f"yt-dlp:{lang}:{kind}:{ext}"
-            if not segs:
+            if not segs and is_youtube(args.url):
                 log("→ falling back to youtube-transcript-api ...")
                 segs, src = fallback_transcript_api(vid, prefer)
 
     if info is not None:
         duration = info.get("duration") or 0
         meta = {
-            "id": vid, "url": f"https://www.youtube.com/watch?v={vid}",
+            "id": vid, "url": info.get("webpage_url") or args.url, "platform": platform,
             "title": info.get("title"), "channel": info.get("channel") or info.get("uploader"),
             "channel_url": info.get("channel_url"), "upload_date": info.get("upload_date"),
             "duration": duration, "view_count": info.get("view_count"), "like_count": info.get("like_count"),
@@ -208,6 +209,12 @@ def main():
         comments = shape_comments(info.get("comments"), duration)
     else:
         # ---- BOT_CHECK: login-free page fallback (meta + chapters + heatmap + comments)
+        if not is_youtube(args.url):
+            print(json.dumps({"error": "EXTRACT_FAILED",
+                              "message": "non-YouTube source: automatic page fallback is YouTube-only; "
+                                         "provide a transcript file or use a yt-dlp-supported platform",
+                              "next": "transcript_utils.py --file <f> --out <dir>"}, ensure_ascii=False, indent=1))
+            sys.exit(2)
         if not vid_guess:
             sys.exit("BOT_CHECK and could not parse a video id from the URL")
         vid, mode = vid_guess, "page-fallback"
@@ -233,7 +240,7 @@ def main():
     # automatic browser export of YouTube's built-in "Show transcript" — runs
     # whenever no transcript was obtained by any previous method, BEFORE falling
     # back to asking the user to paste it by hand.
-    if not segs and not args.no_browser:
+    if not segs and not args.no_browser and is_youtube(args.url):
         log("→ trying automatic browser transcript export (YouTube 'Show transcript') ...")
         try:
             bsegs, bsrc = ftb.run(vid, args.out, cookies_file=args.cookies,
@@ -310,6 +317,28 @@ def extract_video_id(url):
     if m:
         return m.group(1)
     return url if re.fullmatch(r"[\w-]{11}", url) else None
+
+
+def is_youtube(url):
+    return bool(re.search(r"youtube\.com|youtu\.be", url or ""))
+
+
+def detect_platform(url, info):
+    u = (url or "")
+    if re.search(r"youtube\.com|youtu\.be", u):
+        return "youtube"
+    if "bilibili" in u:
+        return "bilibili"
+    if "vimeo.com" in u:
+        return "vimeo"
+    ext = (info or {}).get("extractor") or ""
+    if "Bilibili" in ext:
+        return "bilibili"
+    if "Vimeo" in ext:
+        return "vimeo"
+    if "YouTube" in ext:
+        return "youtube"
+    return "generic"
 
 
 if __name__ == "__main__":

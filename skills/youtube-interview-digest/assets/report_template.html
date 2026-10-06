@@ -271,6 +271,7 @@ const D = JSON.parse(document.getElementById('data').textContent);
 const M = D.meta || {}, G = D.digest || {}, S = D.signals || {};
 const VID = M.id;
 const DUR = M.duration || 0;
+const PLATFORM = (M.platform || (/youtube\.com|youtu\.be/.test(M.url || '') ? 'youtube' : 'generic'));
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -285,7 +286,13 @@ function sec(v){
 }
 function fmt(t){ t = Math.max(0, Math.round(t)); const h=Math.floor(t/3600), m=Math.floor(t%3600/60), s=t%60;
   return (h? h+':'+String(m).padStart(2,'0') : String(m).padStart(2,'0'))+':'+String(s).padStart(2,'0'); }
-function link(t){ return VID ? `https://www.youtube.com/watch?v=${VID}&t=${Math.floor(t)}s` : '#'; }
+function link(t){
+  const s = Math.floor(t || 0);
+  if (PLATFORM === 'bilibili') return VID ? `https://www.bilibili.com/video/${VID}?t=${s}` : '#';
+  if (PLATFORM === 'vimeo')   return VID ? `https://vimeo.com/${VID}#t=${Math.floor(s/60)}m${s%60}s` : '#';
+  if (PLATFORM === 'youtube') return VID ? `https://www.youtube.com/watch?v=${VID}&t=${s}s` : '#';
+  return (M.url || '#');   // generic: open the original platform page
+}
 function ts(v, cls){ const t = sec(v); if (t == null) return ''; return `<a class="ts ${cls||''}" data-t="${t}" href="${link(t)}" target="_blank" rel="noopener">${fmt(t)}</a>`; }
 const cell = v => ts(v) || '<span></span>';
 /* inline [mm:ss] / [h:mm:ss] in any text => timecode link */
@@ -482,9 +489,9 @@ function showFallback(e){
   broken = true;
   const code = e && e.data != null ? e.data : null;
   window.__ytErr = code != null ? code : (e||'timeout');
-  if (code === 101) fbSet('作者关闭了内嵌播放', '该视频不允许站外嵌入。点上方按钮或任意时间码，会在新标签页打开 YouTube 并跳到对应位置。');
-  else if (code === 150) fbSet('视频无法在页面内播放', '可能是作者关闭了内嵌，或当前网络受 YouTube 限制。点时间码会在新标签页打开 YouTube 并跳到对应位置。');
-  else fbSet('在 YouTube 播放', '本地文件打开时浏览器禁止 YouTube 内嵌。点时间码会在新标签页打开并跳到对应位置；或用下方「复制预览命令」在本页直接播放。');
+  if (code === 101) fbSet('作者关闭了内嵌播放', '该视频不允许站外嵌入。点上方按钮或任意时间码，会在新标签页打开原视频并跳到对应位置。');
+  else if (code === 150) fbSet('视频无法在页面内播放', '可能是作者关闭了内嵌，或当前网络受限。点时间码会在新标签页打开原视频并跳到对应位置。');
+  else fbSet('在页面内播放', '本地文件打开时浏览器禁止内嵌。点时间码会在新标签页打开原视频并跳到对应位置；或用下方「复制预览命令」在本页直接播放。');
   const o=$('#openyt'); if (o) o.href = link(lastSeek);
   const f=$('#fallback'); if (f) f.style.display = 'block'; const y=$('#yt'); if (y) y.style.visibility='hidden';
   const c=$('#clean'); if (c) c.classList.remove('on');
@@ -536,7 +543,7 @@ document.addEventListener('click', e=>{
   }
 })();
 if (!VID){ showFallback(); }
-else {
+else if (PLATFORM === 'youtube'){
   if (IS_FILE) showFallback();   // file:// can't embed — show the poster at once, no 12s black wait
   window.onYouTubeIframeAPIReady = function(){
     player = new YT.Player('yt', { videoId: VID, playerVars: { rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, origin: location.protocol.startsWith('http')? location.origin: undefined },
@@ -550,6 +557,33 @@ else {
   const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; s.onerror = ()=>showFallback(); document.head.appendChild(s);
   if (!IS_FILE) setTimeout(()=>{ if (!ready) showFallback(); }, 12000);
 }
+else if (PLATFORM === 'bilibili'){
+  const f = document.createElement('iframe'); f.id = 'yt'; f.allow = 'autoplay; fullscreen; encrypted-media';
+  f.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0';
+  f.src = `https://player.bilibili.com/player.html?bvid=${VID}&page=1&high_quality=1&autoplay=0&danmaku=0`;
+  const old = $('#yt'); if (old && old.parentNode) old.parentNode.replaceChild(f, old);
+  player = f;
+  let btime = 0, bstate = -1;
+  // Bilibili external player postMessage protocol: it emits {event, value} and
+  // accepts {command, value}; see https://player.bilibili.com/player.html
+  window.addEventListener('message', function(ev){
+    const d = ev.data; if (!d || typeof d !== 'object') return;
+    if (d.event === 'playing'){ bstate = 1; ready = true; }
+    else if (d.event === 'pause'){ bstate = 2; }
+    else if (d.event === 'ended'){ bstate = 0; }
+    else if (d.event === 'ready'){ ready = true; }
+    else if (d.event === 'timeupdate' && typeof d.value === 'number'){ btime = d.value; }
+    else if (d.event === 'durationchange' && typeof d.value === 'number'){ DUR = d.value; }
+  });
+  f.seekTo = (t)=> f.contentWindow && f.contentWindow.postMessage({command:'seek', value: Math.floor(t)}, '*');
+  f.playVideo = ()=> f.contentWindow && f.contentWindow.postMessage({command:'play'}, '*');
+  f.pauseVideo = ()=> f.contentWindow && f.contentWindow.postMessage({command:'pause'}, '*');
+  f.getCurrentTime = ()=> btime;
+  f.getDuration = ()=> DUR || 0;
+  f.getPlayerState = ()=> bstate;
+  if (!IS_FILE) setTimeout(()=>{ if (!ready) showFallback(); }, 12000);
+}
+else { showFallback(); }   // generic / vimeo: no in-page player; timecode links open the original
 
 /* ---------- clean (no-distraction) surface ----------
    Cross-origin YouTube chrome (title bar, channel row, "more videos", end-screen

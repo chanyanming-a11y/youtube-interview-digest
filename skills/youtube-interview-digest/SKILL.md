@@ -1,6 +1,6 @@
 ---
 name: youtube-interview-digest
-description: 油管内容总结 / YouTube interview & podcast digest. 当用户给出 YouTube 链接（或自己导出的字幕：.srt / .vtt / .json3 / 带时间戳的 txt / 「显示文字记录」复制出的文本），要求 summarize / translate / 总结 / 翻译 / 精读 / 拆解 / 提炼 一期访谈、播客或演讲时使用。产出带时间戳、每个结论都能点击跳回原视频的中文精读报告（框架 / 可被反驳的观点 / 逐字核对的金句 / 观点冲突 / 观众讨论热点），输出交互式 HTML 报告 + Markdown。Not for: 普通网页文章或博客、非 YouTube 的视频平台、只要逐段纯翻译而不要解构的场景。
+description: 油管内容总结 / YouTube interview & podcast digest，同时支持 B 站、Vimeo 等 yt-dlp 可取字幕的平台，以及导入本地字幕文件。当用户给出视频链接（YouTube / Bilibili / Vimeo 等）或自己导出的字幕（.srt / .vtt / .json3 / 带时间戳的 txt / 「显示文字记录」复制出的文本），要求 summarize / translate / 总结 / 翻译 / 精读 / 拆解 / 提炼 一期访谈、播客或演讲时使用。产出带时间戳、每个结论都能点击跳回原平台对应位置的中文精读报告（框架 / 可被反驳的观点 / 逐字核对的金句 / 观点冲突 / 观众讨论热点），输出交互式 HTML 报告 + Markdown。Not for: 普通网页文章或博客、yt-dlp 无法取字幕且未提供字幕文件的平台、只要逐段纯翻译而不要解构的场景。
 ---
 
 # YouTube 访谈精读（youtube-interview-digest）
@@ -51,7 +51,7 @@ $PY $S/fetch_youtube.py "<URL>" --out $W --max-comments 300
 
 **退出码**：0 成功 · 2 URL 或网络错误 · 3 BOT_CHECK 且页面降级也失败 · **4 除字幕外的数据都已保存**。注意：进入 4 之前，抓取链路第 4 步（自动浏览器导出）已经自动跑过一次；退出码 4 只在该步也失败时出现。此时按顺序处理：
 1. 先确认是否装了 Playwright（`pip install playwright`，用 `channel="chrome"` 复用本机 Chrome，无需下载浏览器）；若已装但仍失败，多半是 cookie 没注入成功——用 `--cookies cookies.txt` 显式指定（Chrome 导出或 `yt-dlp --cookies-from-browser chrome -o cookies.txt <URL>` 生成）。
-2. 仍不行：请用户在 YouTube 页面「…更多 → 显示文字记录」里复制全文（或提供 .srt/.vtt 文件），然后执行：
+2. 仍不行：若是 YouTube，请用户在页面「…更多 → 显示文字记录」里复制全文；其他平台请直接提供 .srt/.vtt 文件。然后执行：
    `$PY $S/transcript_utils.py --file <文件> --out $W --video-id <ID>`（已有的 meta、热度、评论会保留）。也可跳过浏览器自动步，直接在 fetch 时加 `--no-browser`。
 
 **云 IP 被封（agent 沙箱）专用：本机一键抓取**。如果第 4 步自动浏览器导出仍失败，且你确认本机 Mac 是正常 IP + 已登录 Chrome（云沙箱出口 IP 会被 YouTube 整体封锁，属于环境限制而非 skill 问题），可以直接在本机跑 skill 根目录的 `local_fetch.sh` 一次性抓取全部数据：
