@@ -723,18 +723,19 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
   function makeDoubao(){
     return {
       name: 'doubao',
-      speak(item, rate){
+      speak(item, rate, ep){
         return fetch('/tts', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ text: item.t, lang: item.lang, rate: rate }) })
           .then(r => { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
           .then(blob => new Promise(res => {
+            if (ep !== epoch){ res(); return; }       // read was restarted/stopped mid-fetch → discard, never spawn orphan audio (fix double-click overlap)
             const a = new Audio(URL.createObjectURL(blob)); audio = a;
             const done = () => { try{ URL.revokeObjectURL(a.src); }catch(e){} if (audio === a) audio = null; res(); };
             a.onended = done; a.onerror = () => { done(); };
             if (paused) return;                       // do not auto-play while paused; resume() will play it
             a.play().catch(() => { done(); });
           }))
-          .catch(() => { doubaoDead = true; srcTip('豆包'); return native.speak(item, rate); });
+          .catch(() => { if (ep !== epoch) return; doubaoDead = true; srcTip('豆包'); return native.speak(item, rate); });
       },
       pause(){ if (audio) try{ audio.pause(); }catch(e){} },
       resume(){ if (audio) audio.play().catch(()=>{}); },
@@ -744,18 +745,19 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
   function makeEdge(){
     return {
       name: 'edge',
-      speak(item, rate){
+      speak(item, rate, ep){
         return fetch('/tts', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ source:'edge', text: item.t, lang: item.lang, rate: rate }) })
           .then(r => { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
           .then(blob => new Promise(res => {
+            if (ep !== epoch){ res(); return; }       // read was restarted/stopped mid-fetch → discard, never spawn orphan audio (fix double-click overlap)
             const a = new Audio(URL.createObjectURL(blob)); audio = a;
             const done = () => { try{ URL.revokeObjectURL(a.src); }catch(e){} if (audio === a) audio = null; res(); };
             a.onended = done; a.onerror = () => { done(); };
             if (paused) return;                       // do not auto-play while paused; resume() will play it
             a.play().catch(() => { done(); });
           }))
-          .catch(() => { edgeDead = true; srcTip('微软语音'); return native.speak(item, rate); });  // 整段降级到浏览器原生，而非单句跳变
+          .catch(() => { if (ep !== epoch) return; edgeDead = true; srcTip('微软语音'); return native.speak(item, rate); });  // 整段降级到浏览器原生，而非单句跳变
       },
       pause(){ if (audio) try{ audio.pause(); }catch(e){} },
       resume(){ if (audio) audio.play().catch(()=>{}); },
@@ -867,7 +869,7 @@ const fo = $('#follow'); if (fo) fo.addEventListener('click', ()=>{ follow = !fo
     if (qi >= queue.length){ finish(); return; }
     const cur = queue[qi];
     highlight(cur.el);
-    await speaker().speak(cur, (rateSel ? parseFloat(rateSel.value) || 1 : 1));
+    await speaker().speak(cur, (rateSel ? parseFloat(rateSel.value) || 1 : 1), ep);
     if (ep !== epoch || paused) return;
     qi++; setTimeout(() => speakCurrent(ep), 110);
   }
