@@ -37,6 +37,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import webbrowser
+import shutil
+import subprocess
 
 REQUIRED = "report.html"
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -73,6 +75,55 @@ def _edge_available():
         return True
     except Exception:
         return False
+
+
+def _edge_reason():
+    """Human-readable reason Edge TTS is unavailable, for diagnostics/banners.
+
+    The page and the startup banner use this so the user is never left guessing
+    why only the browser-native fallback shows up.
+    """
+    try:
+        import edge_tts  # noqa: F401
+        return ""
+    except Exception as e:
+        ver = ".".join(str(x) for x in sys.version_info[:3])
+        return (f"当前 Python {ver} 未能导入 edge_tts（{type(e).__name__}）；"
+                f" 请在该 Python 下执行：pip install edge-tts")
+
+
+def _find_edge_python():
+    """Find a Python interpreter (other than this one) that can import edge_tts.
+
+    The report auto-starts this server via sys.executable; if that happened to be
+    a Python without edge-tts installed (e.g. the system /usr/bin/python3 3.9.6),
+    Edge would silently fall back to browser-native. Re-execing under a Python that
+    DOES have it makes "run serve_report.py" reliably enable Edge regardless of caller.
+    """
+    import shutil as _shutil
+    raw = [
+        "/Users/chensherday/.workbuddy/binaries/python/envs/default/bin/python",
+        "/Users/chensherday/.workbuddy/binaries/python/versions/3.13.12/bin/python3",
+        "python3",
+        "python",
+    ]
+    seen = set()
+    for c in raw:
+        if not c or c in seen:
+            continue
+        seen.add(c)
+        exe = c if (os.path.sep in c) else (_shutil.which(c) or "")
+        if not exe or not os.path.exists(exe):
+            continue
+        try:
+            r = subprocess.run([exe, "-c", "import edge_tts"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                               timeout=20)
+        except Exception:
+            continue
+        if r.returncode == 0:
+            return exe
+    return None
 
 
 def _edge_tts_bytes(text, lang, rate):
@@ -137,13 +188,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         cfg = getattr(self.server, "tts_cfg", None)
         doubao = bool(cfg and cfg.get("appid") and cfg.get("token"))
         edge = _edge_available()
+        edge_reason = _edge_reason() if not edge else ""
         available = doubao or edge
         voices = {
             "doubao_zh": cfg.get("voice_zh") if doubao else None,
             "doubao_en": cfg.get("voice_en") if doubao else None,
             "edge": EDGE_VOICES if edge else None,
         }
-        self._json(200, {"available": available, "doubao": doubao, "edge": edge, "voices": voices})
+        self._json(200, {"available": available, "doubao": doubao, "edge": edge,
+                         "edge_reason": edge_reason, "voices": voices})
 
     def _tts_synth(self):
         length = int(self.headers.get("Content-Length", "0") or "0")
@@ -302,6 +355,15 @@ class _Server(socketserver.ThreadingTCPServer):
 
 
 def main():
+    # If this interpreter can't import edge_tts but another available Python can,
+    # re-exec under that interpreter so the localhost TTS proxy actually serves Edge.
+    if not _edge_available():
+        alt = _find_edge_python()
+        if alt and os.path.abspath(alt) != os.path.abspath(sys.executable):
+            try:
+                os.execv(alt, [alt] + sys.argv)
+            except Exception:
+                pass
     ap = argparse.ArgumentParser(
         description="Serve a report over localhost for inline playback + optional 豆包 TTS proxy.")
     ap.add_argument("--work", required=True, help="work dir containing report.html")
@@ -328,6 +390,13 @@ def main():
         sys.exit(f"no free port in {args.port}-{args.port + 19}")
 
     httpd.tts_cfg = load_tts_config(args.tts_config)
+
+    if _edge_available():
+        print("✅ 微软语音 (Edge TTS / 晓晓 Neural) 已启用 —— 报告将默认首选该音源", flush=True)
+    else:
+        print("⚠️  微软语音未启用：本地服务可用，但本报告朗读将降级为浏览器原生。", flush=True)
+        print("    原因：" + _edge_reason(), flush=True)
+        print("    修复：在该 Python 下执行  pip install edge-tts  后重启本服务。", flush=True)
 
     url = f"http://127.0.0.1:{port}/{REQUIRED}"
     print(url, flush=True)

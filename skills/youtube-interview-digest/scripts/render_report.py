@@ -155,14 +155,27 @@ def validate(g, duration, paras):
 
 # ---------------------------------------------------------------- markdown
 
-def md_ts(v, vid):
+def platform_ts_url(platform, vid, t):
+    """Return a seekable timestamp URL for the given platform, or None if not seekable."""
+    s = int(t)
+    if platform == "bilibili" and vid:
+        return f"https://www.bilibili.com/video/{vid}?t={s}"
+    if platform == "vimeo" and vid:
+        return f"https://vimeo.com/{vid}#t={s // 60}m{s % 60}s"
+    if platform == "youtube" and vid:
+        return f"https://www.youtube.com/watch?v={vid}&t={s}s"
+    return None
+
+
+def md_ts(v, vid, platform="youtube"):
     t = parse_ts(v)
     if t is None:
         return ""
-    return f"[`{fmt_ts(t)}`](https://www.youtube.com/watch?v={vid}&t={int(t)}s)" if vid else f"`{fmt_ts(t)}`"
+    href = platform_ts_url(platform, vid, t)
+    return f"[`{fmt_ts(t)}`]({href})" if href else f"`{fmt_ts(t)}`"
 
 
-def md_rich(text, vid):
+def md_rich(text, vid, platform="youtube"):
     return re.sub(r"\[((?:\d{1,2}:)?\d{1,2}:\d{2})(?:\s*[-–~]\s*(?:\d{1,2}:)?\d{1,2}:\d{2})?\]",
                   lambda m: md_ts(m.group(1), vid), text or "")
 
@@ -180,8 +193,9 @@ def _num_zh(n):
 
 def to_markdown(meta, g, transcript, vid, extra=None):
     extra = extra or {}
-    R = lambda s: md_rich(s, vid)  # noqa: E731
-    T = lambda v: md_ts(v, vid)  # noqa: E731
+    platform = meta.get("platform") or ("youtube" if re.search(r"youtube\.com|youtu\.be", meta.get("url") or "") else "generic")
+    R = lambda s: md_rich(s, vid, platform)  # noqa: E731
+    T = lambda v: md_ts(v, vid, platform)  # noqa: E731
     L = [f"# {g.get('title_zh') or meta.get('title')}", ""]
     if g.get("title_zh"):
         L.append(f"原标题：{meta.get('title')}  ")
